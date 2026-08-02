@@ -42,6 +42,29 @@ describe('publishImage', () => {
       publishImage('token', 'user-1', 'https://example.com/img.png', 'caption')
     ).rejects.toThrow('Instagram media oluşturma başarısız')
   })
+
+  it('PUBLISH_MODE live ve ağ hatası olursa access token sızmasını önler', async () => {
+    process.env.PUBLISH_MODE = 'live'
+    const tokenValue = 'secret-token-12345'
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockRejectedValue(
+          new Error(
+            `Failed to connect to graph.instagram.com: access_token=${tokenValue} must be valid`
+          )
+        )
+    )
+
+    try {
+      await publishImage('token', 'user-1', 'https://example.com/img.png', 'caption')
+      expect.fail('should have thrown')
+    } catch (error) {
+      expect((error as Error).message).not.toContain(tokenValue)
+      expect((error as Error).message).toContain('access_token=REDACTED')
+    }
+  })
 })
 
 describe('refreshLongLivedToken', () => {
@@ -63,5 +86,25 @@ describe('refreshLongLivedToken', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, text: async () => 'error' }))
 
     await expect(refreshLongLivedToken('old-token')).rejects.toThrow('Token yenileme başarısız')
+  })
+
+  it('ağ hatası olursa access token sızmasını önler', async () => {
+    const tokenValue = 'long-lived-token-secret-xyz'
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockRejectedValue(
+          new Error(`Network request failed: access_token=${tokenValue} was used in request`)
+        )
+    )
+
+    try {
+      await refreshLongLivedToken('old-token')
+      expect.fail('should have thrown')
+    } catch (error) {
+      expect((error as Error).message).not.toContain(tokenValue)
+      expect((error as Error).message).toContain('access_token=REDACTED')
+    }
   })
 })

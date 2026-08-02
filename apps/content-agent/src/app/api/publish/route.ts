@@ -26,6 +26,20 @@ export async function POST(request: Request) {
     accessToken = token.accessToken
   }
 
+  // Önceki bir çalışma bir kaydı SCHEDULED'a çevirip sonra çökerse/zaman
+  // aşımına uğrarsa (maxDuration), kayıt hiçbir zaman yeniden ele alınmaz.
+  // 15 dakikadan eski SCHEDULED kayıtları APPROVED'a geri alıp tekrar denenebilir hale getiriyoruz.
+  const staleCutoff = new Date(Date.now() - 15 * 60 * 1000)
+  const reclaimed = await prisma.contentItem.updateMany({
+    where: { status: 'SCHEDULED', updatedAt: { lt: staleCutoff } },
+    data: { status: 'APPROVED' },
+  })
+  if (reclaimed.count > 0) {
+    await sendAlert(
+      `${reclaimed.count} içerik önceki bir yayın çalışmasında takılı kalmıştı, APPROVED durumuna geri alındı ve tekrar denenecek`
+    )
+  }
+
   const now = new Date()
   const claimed = await prisma.contentItem.findMany({
     where: { status: 'APPROVED', scheduledFor: { lte: now }, imageUrl: { not: null } },
@@ -66,11 +80,17 @@ export async function POST(request: Request) {
         results.push({ id: item.id, status: 'published' })
       }
     } catch (error) {
-      await prisma.contentItem.update({
-        where: { id: item.id },
-        data: { status: 'PUBLISH_FAILED' },
-      })
-      await sendAlert(`Yayın başarısız (${item.id}): ${(error as Error).message}`)
+      try {
+        await prisma.contentItem.update({
+          where: { id: item.id },
+          data: { status: 'PUBLISH_FAILED' },
+        })
+        await sendAlert(`Yayın başarısız (${item.id}): ${(error as Error).message}`)
+      } catch (dbError) {
+        await sendAlert(
+          `Yayın başarısız VE durum güncellenemedi, manuel kontrol gerekiyor (item: ${item.id}): ${(error as Error).message} / ${(dbError as Error).message}`
+        )
+      }
       results.push({ id: item.id, status: 'failed' })
     }
   }

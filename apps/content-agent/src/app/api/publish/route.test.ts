@@ -38,7 +38,10 @@ describe('POST /api/publish', () => {
     process.env.INSTAGRAM_USER_ID = 'ig-user-1'
     delete process.env.PUBLISH_MODE
     mocks.findUnique.mockResolvedValue({ accessToken: 'token' })
-    mocks.updateMany.mockResolvedValue({ count: 1 })
+    // Varsayılan: stale-claim taraması (where.id yok) 0 döner, tek kayıt kilidi (where.id var) 1 döner.
+    mocks.updateMany.mockImplementation(async (args: { where: { id?: string } }) =>
+      args.where.id ? { count: 1 } : { count: 0 }
+    )
     mocks.update.mockResolvedValue({})
     mocks.findMany.mockResolvedValue([])
   })
@@ -124,6 +127,23 @@ describe('POST /api/publish', () => {
         data: { status: 'SCHEDULED' },
       })
     )
+  })
+
+  it('eski SCHEDULED kayıtlarını APPROVED\'a geri alır ve uyarı gönderir', async () => {
+    mocks.updateMany.mockImplementation(async (args: { where: { id?: string; status?: string } }) => {
+      if (args.where.status === 'SCHEDULED') return { count: 2 }
+      return { count: 1 }
+    })
+
+    await POST(makeRequest())
+
+    expect(mocks.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ status: 'SCHEDULED' }),
+        data: { status: 'APPROVED' },
+      })
+    )
+    expect(mocks.sendAlert).toHaveBeenCalledWith(expect.stringContaining('takılı kalmıştı'))
   })
 
   it('yayın başarısız olursa PUBLISH_FAILED işaretler ve uyarı gönderir', async () => {

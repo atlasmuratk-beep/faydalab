@@ -1,0 +1,1 @@
+export const STYLE_GUIDE = `Görsel ve metin üretiminde şu stil kurallarına uy: sakin ve güven veren bir renk paleti (koyu lacivert, beyaz, tek vurgu rengi olarak turkuaz), bol boşluklu minimal kompozisyon, abartısız profesyonel bir ton. Emoji kullanımı ölçülü olsun. Vaat edilemeyecek sonuçlar asla vaat edilmesin.`

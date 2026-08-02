@@ -23,7 +23,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
-  const body = await request.json()
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch (error) {
+    // Non-JSON body; treat as validation failure
+    return NextResponse.json({ ok: true })
+  }
+
   const parsed = callbackSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ ok: true })
@@ -36,24 +43,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true })
   }
 
-  const contentItem = await prisma.contentItem.findUnique({ where: { id: contentItemId } })
-  if (!contentItem) {
-    await answerCallbackQuery(callbackQueryId, 'İçerik bulunamadı')
-    return NextResponse.json({ ok: true })
-  }
+  try {
+    const contentItem = await prisma.contentItem.findUnique({ where: { id: contentItemId } })
+    if (!contentItem) {
+      await answerCallbackQuery(callbackQueryId, 'İçerik bulunamadı')
+      return NextResponse.json({ ok: true })
+    }
 
-  if (action === 'approve') {
-    await prisma.contentItem.update({
-      where: { id: contentItemId },
-      data: { status: 'APPROVED', scheduledFor: nextScheduleSlot() },
-    })
-    await answerCallbackQuery(callbackQueryId, 'Onaylandı, yayın kuyruğuna eklendi')
-  } else {
-    await prisma.contentItem.update({
-      where: { id: contentItemId },
-      data: { status: 'REJECTED' },
-    })
-    await answerCallbackQuery(callbackQueryId, 'Reddedildi')
+    if (action === 'approve') {
+      await prisma.contentItem.update({
+        where: { id: contentItemId },
+        data: { status: 'APPROVED', scheduledFor: nextScheduleSlot() },
+      })
+      await answerCallbackQuery(callbackQueryId, 'Onaylandı, yayın kuyruğuna eklendi')
+    } else {
+      await prisma.contentItem.update({
+        where: { id: contentItemId },
+        data: { status: 'REJECTED' },
+      })
+      await answerCallbackQuery(callbackQueryId, 'Reddedildi')
+    }
+  } catch (error) {
+    // Prevent retry-storm: database error, Telegram error, or already-answered callback
+    console.error('Error processing callback:', error)
   }
 
   return NextResponse.json({ ok: true })

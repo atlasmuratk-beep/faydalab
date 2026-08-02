@@ -65,4 +65,14 @@ describe('POST /api/telegram/webhook', () => {
     expect(response.status).toBe(200)
     expect(mocks.update).not.toHaveBeenCalled()
   })
+
+  it('JSON parse hatası 200 döner', async () => {
+    const request = new Request('http://localhost/api/telegram/webhook?secret=test-secret', {
+      method: 'POST',
+      body: 'invalid json body',
+    })
+    const response = await POST(request)
+    expect(response.status).toBe(200)
+    expect(mocks.update).not.toHaveBeenCalled()
+  })
 })

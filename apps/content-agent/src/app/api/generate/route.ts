@@ -5,10 +5,11 @@ import { generateCaption } from '@/lib/claude'
 import { generateImage } from '@/lib/image-gen'
 import { sendContentPreview, sendAlert } from '@/lib/telegram'
 import { withRetry } from '@/lib/with-retry'
+import { verifyInternalAuthHeader } from '@/lib/auth'
 
 export async function POST(request: Request) {
   const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.INTERNAL_API_SECRET}`) {
+  if (!verifyInternalAuthHeader(authHeader)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/db'
 import { answerCallbackQuery } from '@/lib/telegram'
+import { verifyTelegramWebhookSecret } from '@/lib/auth'
 
 const callbackSchema = z.object({
   callback_query: z.object({
@@ -19,7 +20,7 @@ function nextScheduleSlot(): Date {
 
 export async function POST(request: Request) {
   const secret = new URL(request.url).searchParams.get('secret')
-  if (secret !== process.env.TELEGRAM_WEBHOOK_SECRET) {
+  if (!verifyTelegramWebhookSecret(secret)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 

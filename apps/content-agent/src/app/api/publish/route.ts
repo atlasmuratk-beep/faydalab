@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { publishImage } from '@/lib/instagram'
 import { sendAlert } from '@/lib/telegram'
+import { verifyInternalAuthHeader } from '@/lib/auth'
 
 export async function POST(request: Request) {
   const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.INTERNAL_API_SECRET}`) {
+  if (!verifyInternalAuthHeader(authHeader)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 

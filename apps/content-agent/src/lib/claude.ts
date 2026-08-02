@@ -36,7 +36,7 @@ export async function generateCaption(
 ): Promise<GeneratedCaption> {
   const message = await anthropicClient().messages.create({
     model: 'claude-sonnet-5',
-    max_tokens: 1024,
+    max_tokens: 2048,
     system: `Sen FaydaLab için içerik üreten bir Instagram içerik yazarısın. ${STYLE_GUIDE}`,
     messages: [
       {

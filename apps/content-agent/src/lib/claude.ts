@@ -1,15 +1,27 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { ContentPillar } from '@prisma/client'
+import { z } from 'zod'
 import { STYLE_GUIDE } from './style-guide'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+// İstemci tembel kurulur: SDK, anahtar yoksa kurucuda hata fırlattığı için
+// modül seviyesinde kurmak `next build` sırasında (env yokken) derlemeyi bozar.
+let client: Anthropic | null = null
 
-export type GeneratedCaption = {
-  topic: string
-  caption: string
-  hashtags: string[]
-  imagePrompt: string
+function anthropicClient(): Anthropic {
+  if (!client) {
+    client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  }
+  return client
 }
+
+export const generatedCaptionSchema = z.object({
+  topic: z.string(),
+  caption: z.string(),
+  hashtags: z.array(z.string()),
+  imagePrompt: z.string(),
+})
+
+export type GeneratedCaption = z.infer<typeof generatedCaptionSchema>
 
 const PILLAR_PROMPTS: Record<ContentPillar, string> = {
   AI_AUTOMATION:
@@ -22,7 +34,7 @@ export async function generateCaption(
   pillar: ContentPillar,
   recentTopics: string[]
 ): Promise<GeneratedCaption> {
-  const message = await anthropic.messages.create({
+  const message = await anthropicClient().messages.create({
     model: 'claude-sonnet-5',
     max_tokens: 1024,
     system: `Sen FaydaLab için içerik üreten bir Instagram içerik yazarısın. ${STYLE_GUIDE}`,
@@ -50,5 +62,7 @@ export async function generateCaption(
     throw new Error('Claude yanıtında metin bloğu bulunamadı')
   }
 
-  return JSON.parse(textBlock.text) as GeneratedCaption
+  // Şema doğrulaması başarısız olursa hata fırlatılır; çağıran taraftaki withRetry
+  // bunu diğer üretim hataları gibi yakalayıp yeniden dener.
+  return generatedCaptionSchema.parse(JSON.parse(textBlock.text))
 }

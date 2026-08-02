@@ -41,6 +41,32 @@ describe('generateCaption', () => {
     )
   })
 
+  it('şemaya uymayan JSON yanıtında hata fırlatır', async () => {
+    mockCreate.mockResolvedValue({
+      content: [{ type: 'text', text: JSON.stringify({ topic: 'Konu', caption: 'metin' }) }],
+    })
+
+    await expect(generateCaption('AI_AUTOMATION', [])).rejects.toThrow()
+  })
+
+  it('hashtags dizi değilse hata fırlatır', async () => {
+    mockCreate.mockResolvedValue({
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            topic: 'Konu',
+            caption: 'metin',
+            hashtags: 'ai',
+            imagePrompt: 'p',
+          }),
+        },
+      ],
+    })
+
+    await expect(generateCaption('AI_AUTOMATION', [])).rejects.toThrow()
+  })
+
   it('metin bloğu yoksa hata fırlatır', async () => {
     mockCreate.mockResolvedValue({ content: [] })
 

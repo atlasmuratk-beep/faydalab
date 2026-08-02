@@ -81,4 +81,63 @@ describe('POST /api/generate', () => {
     expect(mocks.sendAlert).toHaveBeenCalledWith(expect.stringContaining('claude hatası'))
     expect(mocks.create).not.toHaveBeenCalled()
   })
+
+  it('sütun seçimi başarısız olursa 500 döner ve uyarı gönderir', async () => {
+    mocks.getNextPillar.mockRejectedValue(new Error('db okuma hatası'))
+
+    const response = await POST(makeRequest())
+    const body = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(body).toEqual({ error: 'pillar_selection_failed' })
+    expect(mocks.sendAlert).toHaveBeenCalledWith(expect.stringContaining('db okuma hatası'))
+    expect(mocks.generateCaption).not.toHaveBeenCalled()
+  })
+
+  it('ContentItem kaydı oluşturulamazsa 500 döner ve uyarı gönderir', async () => {
+    mocks.create.mockRejectedValue(new Error('insert hatası'))
+
+    const response = await POST(makeRequest())
+    const body = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(body).toEqual({ error: 'content_persist_failed' })
+    expect(mocks.sendAlert).toHaveBeenCalledWith(expect.stringContaining('insert hatası'))
+    expect(mocks.sendContentPreview).not.toHaveBeenCalled()
+  })
+
+  it('Telegram gönderimi başarısız olursa uyarı gönderir ve GENERATION_FAILED işaretler', async () => {
+    mocks.sendContentPreview.mockRejectedValue(new Error('telegram 400'))
+
+    const response = await POST(makeRequest())
+    const body = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(body).toEqual({ error: 'telegram_send_failed' })
+    expect(mocks.sendAlert).toHaveBeenCalledWith(expect.stringContaining('telegram 400'))
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { status: 'GENERATION_FAILED' } })
+    )
+  })
+
+  it('Telegram önizleme metnini 1024 sınırının altına kısaltır ama kaydı bozmaz', async () => {
+    const longCaption = 'a'.repeat(1500)
+    mocks.generateCaption.mockResolvedValue({
+      topic: 'Konu',
+      caption: longCaption,
+      hashtags: ['ai'],
+      imagePrompt: 'prompt',
+    })
+
+    await POST(makeRequest())
+
+    const previewText = mocks.sendContentPreview.mock.calls[0][2]
+    expect(previewText.length).toBeLessThanOrEqual(1024)
+    expect(previewText.endsWith('…')).toBe(true)
+
+    // Kaydedilen caption kısaltılmamış olmalı
+    expect(mocks.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ caption: longCaption }) })
+    )
+  })
 })

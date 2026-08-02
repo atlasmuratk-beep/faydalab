@@ -49,4 +49,14 @@ describe('telegram', () => {
     await sendAlert('test uyarı')
     expect(fetch).not.toHaveBeenCalled()
   })
+
+  it('sendAlert Telegram hatası fırlatsa bile hata yaymaz', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')))
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    await expect(sendAlert('test uyarı')).resolves.toBeUndefined()
+    expect(consoleError).toHaveBeenCalled()
+
+    consoleError.mockRestore()
+  })
 })

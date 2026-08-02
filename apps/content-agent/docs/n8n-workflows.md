@@ -25,5 +25,22 @@
 n8n'e bağlı değil — Telegram'ın kendisine, bot güncellemelerini `/api/telegram/webhook` adresine yönlendirmesini söylemek için bir kerelik şu çağrı yapılır:
 
 ```bash
-curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook?url=https://<vercel-domain>/api/telegram/webhook?secret=$TELEGRAM_WEBHOOK_SECRET"
+curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
+  -d "url=https://<vercel-domain>/api/telegram/webhook" \
+  -d "secret_token=$TELEGRAM_WEBHOOK_SECRET"
 ```
+
+`secret_token`, `setWebhook` çağrısında Telegram'a kaydedilir; Telegram bundan sonra her webhook teslimatında bunu `X-Telegram-Bot-Api-Secret-Token` header'ı olarak gönderir. Endpoint secret'ı bu header'dan okur — böylece secret URL tabanlı erişim loglarına düşmez (query string'de taşınmaz).
+
+## Instagram Token'ının İlk Kez Yüklenmesi (n8n dışı, tek seferlik)
+
+Meta App Review tamamlanıp uzun ömürlü (long-lived) Instagram access token alındıktan sonra, token'ı veritabanına bir kerelik yüklemek için:
+
+```bash
+curl "https://<vercel-domain>/api/token/seed" \
+  -H "Authorization: Bearer $INTERNAL_API_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"accessToken":"<long-lived-token>","expiresInSeconds":5184000}'
+```
+
+Bundan sonra Workflow 3 (haftalık token yenileme) token'ı güncel tutar.

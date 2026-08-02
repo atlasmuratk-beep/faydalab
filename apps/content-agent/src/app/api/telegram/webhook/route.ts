@@ -8,18 +8,27 @@ const callbackSchema = z.object({
   callback_query: z.object({
     id: z.string(),
     data: z.string(),
+    message: z
+      .object({
+        chat: z.object({ id: z.union([z.string(), z.number()]) }).optional(),
+      })
+      .optional(),
   }),
 })
 
+// Yayın saati Europe/Istanbul 10:00'a sabitlenir. Vercel UTC çalıştığı için
+// dönüşümü açıkça yapıyoruz; Türkiye 2016'dan beri DST kullanmadığından ofset
+// yıl boyu sabit +03'tür.
 function nextScheduleSlot(): Date {
-  const next = new Date()
-  next.setDate(next.getDate() + 1)
-  next.setHours(10, 0, 0, 0)
-  return next
+  const now = new Date()
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+  return new Date(
+    Date.UTC(tomorrow.getUTCFullYear(), tomorrow.getUTCMonth(), tomorrow.getUTCDate(), 7, 0, 0)
+  )
 }
 
 export async function POST(request: Request) {
-  const secret = new URL(request.url).searchParams.get('secret')
+  const secret = request.headers.get('x-telegram-bot-api-secret-token')
   if (!verifyTelegramWebhookSecret(secret)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
@@ -38,8 +47,17 @@ export async function POST(request: Request) {
   }
 
   const { id: callbackQueryId, data } = parsed.data.callback_query
+
+  // Derinlemesine savunma: payload'da sohbet kimliği varsa, beklenen sohbetten
+  // gelmeyen callback'leri sessizce yok say.
+  const callbackChatId = parsed.data.callback_query.message?.chat?.id
+  if (callbackChatId !== undefined && String(callbackChatId) !== process.env.TELEGRAM_CHAT_ID) {
+    return NextResponse.json({ ok: true })
+  }
+
   const [action, contentItemId] = data.split(':')
 
+  // Not: "Düzenle iste" butonu Faz 1b'ye ertelendi; şimdilik yalnızca onay/red var.
   if (action !== 'approve' && action !== 'reject') {
     return NextResponse.json({ ok: true })
   }

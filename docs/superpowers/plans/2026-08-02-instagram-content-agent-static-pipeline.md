@@ -19,6 +19,10 @@
 - İki içerik sütunü (AI_AUTOMATION, WEB_QR_CASE_STUDY) dönüşümlü kullanılır (spec: İçerik Üretim Hattı)
 - Bu plan **sadece statik postları** kapsar. Reels/video (Remotion) ayrı bir plan (Faz 1b) olarak yürütülecek — aynı veri modelini kullanacağı için `ContentFormat` enum'u ileride `VIDEO` değeriyle genişletilebilir şekilde tasarlanmalı.
 
+## Known Deviations
+
+- Telegram onay akışındaki **"Düzenle iste"** butonu Faz 1a'da uygulanmadı, Faz 1b'ye ertelendi — Faz 1a yalnızca Onayla/Reddet butonlarını içerir.
+
 ---
 
 ### Task 1: Ön koşul hesapları ve ortam değişkenleri checklist'i

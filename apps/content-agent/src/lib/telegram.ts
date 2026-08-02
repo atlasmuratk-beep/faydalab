@@ -25,6 +25,7 @@ export async function sendContentPreview(
       photo: imageUrl,
       caption,
       reply_markup: {
+        // "Düzenle iste" butonu Faz 1b'ye ertelendi (bkz. plan: Known Deviations).
         inline_keyboard: [
           [
             { text: '✅ Onayla', callback_data: `approve:${contentItemId}` },
@@ -51,13 +52,19 @@ export async function answerCallbackQuery(callbackQueryId: string, text: string)
   })
 }
 
+// Diğer fonksiyonların catch bloklarından çağrıldığı için asla hata fırlatmaz;
+// Telegram tarafındaki bir arıza çağıranın akışını kesmemelidir.
 export async function sendAlert(message: string): Promise<void> {
   const chatId = process.env.TELEGRAM_CHAT_ID
   if (!chatId) return
 
-  await fetch(`${apiBase()}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text: message }),
-  })
+  try {
+    await fetch(`${apiBase()}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: message }),
+    })
+  } catch (error) {
+    console.error('Telegram uyarısı gönderilemedi:', error)
+  }
 }

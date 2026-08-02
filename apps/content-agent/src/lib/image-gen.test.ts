@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const { mockGenerate } = vi.hoisted(() => ({
+const { mockGenerate, mockPut } = vi.hoisted(() => ({
   mockGenerate: vi.fn(),
+  mockPut: vi.fn(),
 }))
 
 vi.mock('openai', () => ({
@@ -10,27 +11,46 @@ vi.mock('openai', () => ({
   },
 }))
 
+vi.mock('@vercel/blob', () => ({ put: mockPut }))
+
 import { generateImage } from './image-gen'
+
+const FAKE_B64 = Buffer.from('fake-image-bytes').toString('base64')
 
 describe('generateImage', () => {
   beforeEach(() => {
     mockGenerate.mockReset()
+    mockPut.mockReset()
+    mockPut.mockResolvedValue({ url: 'https://blob.vercel-storage.com/fake.png' })
   })
 
-  it('OpenAI yanıtından görsel URL döner', async () => {
-    mockGenerate.mockResolvedValue({ data: [{ url: 'https://example.com/image.png' }] })
+  it('base64 görseli Vercel Blob\'a yükleyip kalıcı URL döner', async () => {
+    mockGenerate.mockResolvedValue({ data: [{ b64_json: FAKE_B64 }] })
 
     const result = await generateImage('minimal dashboard illustration')
 
-    expect(result).toBe('https://example.com/image.png')
+    expect(result).toBe('https://blob.vercel-storage.com/fake.png')
     expect(mockGenerate).toHaveBeenCalledWith(
       expect.objectContaining({ model: 'gpt-image-1', prompt: 'minimal dashboard illustration' })
     )
+
+    const [pathname, body, options] = mockPut.mock.calls[0]
+    expect(pathname).toMatch(/^content-images\/\d+\.png$/)
+    expect(Buffer.isBuffer(body)).toBe(true)
+    expect((body as Buffer).toString()).toBe('fake-image-bytes')
+    expect(options).toEqual({ access: 'public', contentType: 'image/png' })
   })
 
-  it('URL dönmezse hata fırlatır', async () => {
+  it('base64 veri dönmezse hata fırlatır ve yükleme yapmaz', async () => {
     mockGenerate.mockResolvedValue({ data: [{}] })
 
-    await expect(generateImage('prompt')).rejects.toThrow('Görsel üretiminden URL dönmedi')
+    await expect(generateImage('prompt')).rejects.toThrow('Görsel üretiminden veri dönmedi')
+    expect(mockPut).not.toHaveBeenCalled()
+  })
+
+  it('data dizisi boşsa hata fırlatır', async () => {
+    mockGenerate.mockResolvedValue({ data: [] })
+
+    await expect(generateImage('prompt')).rejects.toThrow('Görsel üretiminden veri dönmedi')
   })
 })

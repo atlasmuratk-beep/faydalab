@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ContentPillar {
+  AI_AUTOMATION
+  WEB_QR_CASE_STUDY
+}
+
+enum ContentFormat {
+  STATIC
+}
+
+enum ContentStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  SCHEDULED
+  PUBLISHED
+  GENERATION_FAILED
+  PUBLISH_FAILED
+}
+
+model ContentItem {
+  id                String        @id @default(cuid())
+  pillar            ContentPillar
+  format            ContentFormat @default(STATIC)
+  topic             String
+  caption           String
+  hashtags          String[]
+  imageUrl          String?
+  status            ContentStatus @default(DRAFT)
+  telegramChatId    String?
+  telegramMessageId String?
+  scheduledFor      DateTime?
+  publishedAt       DateTime?
+  instagramMediaId  String?
+  rejectionNote     String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([pillar, createdAt])
+  @@index([status, scheduledFor])
+}
+
+model IntegrationToken {
+  id          String   @id @default(cuid())
+  provider    String   @unique
+  accessToken String
+  expiresAt   DateTime
+  updatedAt   DateTime @updatedAt
+}

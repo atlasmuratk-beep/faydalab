@@ -17,18 +17,49 @@ describe('publishImage', () => {
     expect(fetchSpy).not.toHaveBeenCalled()
   })
 
-  it('PUBLISH_MODE live ise media oluşturur ve yayınlar', async () => {
+  it('PUBLISH_MODE live ise media oluşturur, hazır olmasını bekler ve yayınlar', async () => {
     process.env.PUBLISH_MODE = 'live'
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'creation-1' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ status_code: 'FINISHED' }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'media-1' }) })
     vi.stubGlobal('fetch', fetchMock)
 
     const result = await publishImage('token', 'user-1', 'https://example.com/img.png', 'caption')
 
     expect(result.mediaId).toBe('media-1')
-    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+  })
+
+  it('media hazır olana kadar durumu tekrar tekrar kontrol eder', async () => {
+    process.env.PUBLISH_MODE = 'live'
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'creation-1' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ status_code: 'IN_PROGRESS' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ status_code: 'FINISHED' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'media-1' }) })
+    vi.stubGlobal('fetch', fetchMock)
+    vi.stubGlobal('setTimeout', ((fn: () => void) => fn()) as unknown as typeof setTimeout)
+
+    const result = await publishImage('token', 'user-1', 'https://example.com/img.png', 'caption')
+
+    expect(result.mediaId).toBe('media-1')
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+  })
+
+  it('media durumu ERROR dönerse hata fırlatır', async () => {
+    process.env.PUBLISH_MODE = 'live'
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'creation-1' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ status_code: 'ERROR' }) })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      publishImage('token', 'user-1', 'https://example.com/img.png', 'caption')
+    ).rejects.toThrow('status_code=ERROR')
   })
 
   it('PUBLISH_MODE live ve media oluşturma başarısız olursa hata fırlatır', async () => {

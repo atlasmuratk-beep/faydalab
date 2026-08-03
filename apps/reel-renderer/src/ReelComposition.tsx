@@ -60,6 +60,14 @@ export function ReelComposition({ backgroundImageUrl, segments }: ReelCompositio
           >
             {segment.text}
           </div>
+          <div
+            style={{
+              width: 120,
+              height: 3,
+              backgroundColor: '#D4AF37',
+              marginTop: 24,
+            }}
+          />
         </AbsoluteFill>
       </Sequence>
     )
@@ -71,6 +79,21 @@ export function ReelComposition({ backgroundImageUrl, segments }: ReelCompositio
     <AbsoluteFill>
       <KenBurnsBackground imageUrl={backgroundImageUrl} />
       {sequences}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 60,
+          right: 60,
+          fontFamily: 'Sora, sans-serif',
+          fontWeight: 600,
+          fontSize: 24,
+          color: '#B8BDC7',
+          opacity: 0.6,
+          letterSpacing: 2,
+        }}
+      >
+        FAYDALAB
+      </div>
     </AbsoluteFill>
   )
 }

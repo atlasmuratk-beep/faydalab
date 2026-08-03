@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { publishImage, refreshLongLivedToken } from './instagram'
+import { publishImage, publishReel, refreshLongLivedToken } from './instagram'
 
 describe('publishImage', () => {
   beforeEach(() => {
@@ -95,6 +95,55 @@ describe('publishImage', () => {
       expect((error as Error).message).not.toContain(tokenValue)
       expect((error as Error).message).toContain('access_token=REDACTED')
     }
+  })
+})
+
+describe('publishReel', () => {
+  beforeEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('PUBLISH_MODE draft ise gerçek API çağrısı yapmadan sahte mediaId döner', async () => {
+    process.env.PUBLISH_MODE = 'draft'
+    const fetchSpy = vi.fn()
+    vi.stubGlobal('fetch', fetchSpy)
+
+    const result = await publishReel('token', 'user-1', 'https://example.com/video.mp4', 'caption')
+
+    expect(result.mediaId).toContain('draft-mode-')
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it('PUBLISH_MODE live ise REELS media_type ile container oluşturur, bekler ve yayınlar', async () => {
+    process.env.PUBLISH_MODE = 'live'
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'creation-1' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ status_code: 'FINISHED' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'media-1' }) })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await publishReel('token', 'user-1', 'https://example.com/video.mp4', 'caption')
+
+    expect(result.mediaId).toBe('media-1')
+    const createCallBody = JSON.parse(fetchMock.mock.calls[0][1].body)
+    expect(createCallBody).toEqual({
+      media_type: 'REELS',
+      video_url: 'https://example.com/video.mp4',
+      caption: 'caption',
+    })
+  })
+
+  it('container oluşturma başarısız olursa hata fırlatır', async () => {
+    process.env.PUBLISH_MODE = 'live'
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, text: async () => 'bad request' })
+    )
+
+    await expect(
+      publishReel('token', 'user-1', 'https://example.com/video.mp4', 'caption')
+    ).rejects.toThrow('Instagram reel oluşturma başarısız')
   })
 })
 

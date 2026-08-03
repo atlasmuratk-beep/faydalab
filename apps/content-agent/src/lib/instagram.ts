@@ -17,12 +17,17 @@ async function requestGraphApi(url: string, init?: RequestInit): Promise<Respons
 }
 
 const CONTAINER_STATUS_MAX_ATTEMPTS = 10
+const REEL_CONTAINER_STATUS_MAX_ATTEMPTS = 30
 const CONTAINER_STATUS_POLL_INTERVAL_MS = 2000
 
 // Instagram, medya container'ını arka planda (görseli indirip işleyerek) hazırlar;
 // status_code FINISHED olmadan media_publish çağrısı "media not ready" hatası verir.
-async function waitForContainerReady(creationId: string, accessToken: string): Promise<void> {
-  for (let attempt = 0; attempt < CONTAINER_STATUS_MAX_ATTEMPTS; attempt++) {
+async function waitForContainerReady(
+  creationId: string,
+  accessToken: string,
+  maxAttempts: number = CONTAINER_STATUS_MAX_ATTEMPTS
+): Promise<void> {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const statusResponse = await requestGraphApi(
       `${GRAPH_API_BASE}/${creationId}?fields=status_code&access_token=${accessToken}`
     )
@@ -84,6 +89,50 @@ export async function publishImage(
 
   if (!publishResponse.ok) {
     throw new Error(`Instagram yayınlama başarısız: ${redactAccessToken(await publishResponse.text())}`)
+  }
+
+  const { id: mediaId } = await publishResponse.json()
+  return { mediaId }
+}
+
+export async function publishReel(
+  accessToken: string,
+  igUserId: string,
+  videoUrl: string,
+  caption: string
+): Promise<PublishResult> {
+  if (process.env.PUBLISH_MODE !== 'live') {
+    return { mediaId: `draft-mode-${Date.now()}` }
+  }
+
+  const createResponse = await requestGraphApi(
+    `${GRAPH_API_BASE}/${igUserId}/media?access_token=${accessToken}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ media_type: 'REELS', video_url: videoUrl, caption }),
+    }
+  )
+
+  if (!createResponse.ok) {
+    throw new Error(`Instagram reel oluşturma başarısız: ${redactAccessToken(await createResponse.text())}`)
+  }
+
+  const { id: creationId } = await createResponse.json()
+
+  await waitForContainerReady(creationId, accessToken, REEL_CONTAINER_STATUS_MAX_ATTEMPTS)
+
+  const publishResponse = await requestGraphApi(
+    `${GRAPH_API_BASE}/${igUserId}/media_publish?access_token=${accessToken}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ creation_id: creationId }),
+    }
+  )
+
+  if (!publishResponse.ok) {
+    throw new Error(`Instagram reel yayınlama başarısız: ${redactAccessToken(await publishResponse.text())}`)
   }
 
   const { id: mediaId } = await publishResponse.json()

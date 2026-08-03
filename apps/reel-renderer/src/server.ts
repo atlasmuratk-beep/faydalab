@@ -13,10 +13,16 @@ const segmentSchema = z.object({
   durationMs: z.number().positive(),
 })
 
-const renderRequestSchema = z.object({
-  backgroundImageUrl: z.string().url(),
-  segments: z.array(segmentSchema).min(1),
-})
+const MAX_TOTAL_DURATION_MS = 120_000
+
+const renderRequestSchema = z
+  .object({
+    backgroundImageUrl: z.string().url(),
+    segments: z.array(segmentSchema).min(1),
+  })
+  .refine((data) => data.segments.reduce((sum, s) => sum + s.durationMs, 0) <= MAX_TOTAL_DURATION_MS, {
+    message: `Toplam segment süresi ${MAX_TOTAL_DURATION_MS}ms'yi aşıyor — muhtemelen hatalı bir durationMs değeri var`,
+  })
 
 function timingSafeEqualStrings(a: string, b: string): boolean {
   if (a.length !== b.length) return false

@@ -37,7 +37,13 @@ let bundleLocationPromise: Promise<string> | null = null
 
 function getBundleLocation(): Promise<string> {
   if (!bundleLocationPromise) {
-    bundleLocationPromise = bundle({ entryPoint: path.join(process.cwd(), 'src', 'index.ts') })
+    bundleLocationPromise = bundle({ entryPoint: path.join(process.cwd(), 'src', 'index.ts') }).catch((error) => {
+      // bundle() reddedilirse cache'i temizle ki bir sonraki istek yeniden denesin;
+      // aksi halde reddedilmiş Promise süreç yeniden başlatılana kadar cache'de kalır
+      // ve HİÇBİR istek başarılı olamaz.
+      bundleLocationPromise = null
+      throw error
+    })
   }
   return bundleLocationPromise
 }
@@ -76,13 +82,17 @@ export function createApp(): Express {
         chromiumOptions: { enableMultiProcessOnLinux: true },
       })
 
-      const fileBuffer = await readFile(outputPath)
-      const blob = await put(`reel-videos/${Date.now()}.mp4`, fileBuffer, {
-        access: 'public',
-        contentType: 'video/mp4',
-      })
-
-      await unlink(outputPath).catch(() => {})
+      let blob
+      try {
+        const fileBuffer = await readFile(outputPath)
+        blob = await put(`reel-videos/${Date.now()}.mp4`, fileBuffer, {
+          access: 'public',
+          contentType: 'video/mp4',
+        })
+      } finally {
+        // Blob yükleme başarısız olsa bile geçici mp4 dosyasının diskte kalmamasını sağla.
+        await unlink(outputPath).catch(() => {})
+      }
 
       res.json({ videoUrl: blob.url })
     } catch (error) {

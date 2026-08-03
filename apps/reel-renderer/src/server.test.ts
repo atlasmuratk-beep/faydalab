@@ -112,5 +112,8 @@ describe('POST /render', () => {
 
     expect(result.status).toBe(500)
     expect(result.body.error).toBe('render_failed')
+    // Bilgi ifşası regresyonu: hata mesajı (dosya yolu, Remotion/Chromium detayları)
+    // istemciye asla sızmamalı — gövdede yalnızca genel `error` alanı olmalı.
+    expect(result.body).toEqual({ error: 'render_failed' })
   })
 })

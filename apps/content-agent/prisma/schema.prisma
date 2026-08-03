@@ -14,6 +14,7 @@ enum ContentPillar {
 
 enum ContentFormat {
   STATIC
+  REEL
 }
 
 enum ContentStatus {
@@ -35,6 +36,7 @@ model ContentItem {
   caption           String
   hashtags          String[]
   imageUrl          String?
+  videoUrl          String?
   status            ContentStatus @default(DRAFT)
   telegramChatId    String?
   telegramMessageId String?

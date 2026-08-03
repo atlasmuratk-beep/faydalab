@@ -85,6 +85,11 @@ export function createApp(): Express {
         // "JavaScript heap out of memory" ile çöküyordu; tek seferde tek
         // sekme render ederek bellek kullanımını sınırlıyoruz.
         concurrency: 1,
+        // Frame render ve video encode'u aynı anda yapmak (Remotion'ın
+        // varsayılanı) hız için belleği feda ediyor; bunu kapatmak render
+        // süresini uzatsa da bellek kullanımını ciddi şekilde düşürüyor
+        // (resmi Remotion önerisi, bkz. render-media.mdx).
+        disallowParallelEncoding: true,
       })
 
       let blob

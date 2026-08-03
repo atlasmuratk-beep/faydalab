@@ -81,6 +81,10 @@ export function createApp(): Express {
         outputLocation: outputPath,
         inputProps,
         chromiumOptions: { enableMultiProcessOnLinux: true },
+        // Railway'in küçük container'ında paralel Chromium sekmeleri
+        // "JavaScript heap out of memory" ile çöküyordu; tek seferde tek
+        // sekme render ederek bellek kullanımını sınırlıyoruz.
+        concurrency: 1,
       })
 
       let blob

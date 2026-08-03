@@ -141,4 +141,26 @@ describe('POST /api/generate-reel', () => {
       expect.objectContaining({ data: { status: 'GENERATION_FAILED' } })
     )
   })
+
+  it('görsel üretimi başarısız olursa 500 döner', async () => {
+    mocks.generateImage.mockRejectedValue(new Error('görsel hatası'))
+
+    const response = await POST(makeRequest())
+    const body = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(body).toEqual({ error: 'image_generation_failed' })
+    expect(mocks.sendAlert).toHaveBeenCalled()
+  })
+
+  it('içerik kaydı oluşturulamazsa 500 döner', async () => {
+    mocks.create.mockRejectedValue(new Error('db hatası'))
+
+    const response = await POST(makeRequest())
+    const body = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(body).toEqual({ error: 'content_persist_failed' })
+    expect(mocks.sendAlert).toHaveBeenCalled()
+  })
 })

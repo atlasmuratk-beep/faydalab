@@ -31,9 +31,12 @@ COPY tsconfig.json ./
 COPY src ./src
 
 # Remotion'ın kendi yönettiği Chrome Headless Shell'i indir.
-RUN npx remotion browser ensure
+# npx yerine doğrudan yerel binary çağrılıyor: npx'in bazı ortamlarda paket
+# içindeki çalıştırılabilir dosyayı bulamayıp "could not determine executable
+# to run" hatası vermesi biliniyor (Railway build ortamında gözlemlendi).
+RUN node_modules/.bin/remotion browser ensure
 
 ENV PORT=3001
 EXPOSE 3001
 
-CMD ["npx", "tsx", "src/server.ts"]
+CMD ["node_modules/.bin/tsx", "src/server.ts"]

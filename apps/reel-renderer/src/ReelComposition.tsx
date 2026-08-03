@@ -1,4 +1,7 @@
 import { AbsoluteFill, Audio, Img, Sequence, interpolate, useCurrentFrame, useVideoConfig } from 'remotion'
+import { loadFont } from '@remotion/google-fonts/Sora'
+
+const { fontFamily } = loadFont()
 
 export type ReelSegment = {
   text: string
@@ -50,7 +53,7 @@ export function ReelComposition({ backgroundImageUrl, segments }: ReelCompositio
           <Audio src={segment.audioUrl} />
           <div
             style={{
-              fontFamily: 'Sora, sans-serif',
+              fontFamily,
               fontWeight: 600,
               fontSize: 56,
               color: '#F5F5F5',
@@ -84,7 +87,7 @@ export function ReelComposition({ backgroundImageUrl, segments }: ReelCompositio
           position: 'absolute',
           bottom: 60,
           right: 60,
-          fontFamily: 'Sora, sans-serif',
+          fontFamily,
           fontWeight: 600,
           fontSize: 24,
           color: '#B8BDC7',

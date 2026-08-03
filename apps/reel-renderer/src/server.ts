@@ -77,6 +77,7 @@ export function createApp(): Express {
         composition,
         serveUrl,
         codec: 'h264',
+        crf: 23,
         outputLocation: outputPath,
         inputProps,
         chromiumOptions: { enableMultiProcessOnLinux: true },

@@ -30,6 +30,25 @@ describe('renderReel', () => {
     )
   })
 
+  it('render isteği zaman aşımına uğrarsa (AbortError) hata fırlatır', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(
+      Object.assign(new Error('The operation was aborted'), { name: 'AbortError' })
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      renderReel({
+        backgroundImageUrl: 'https://x/img.png',
+        segments: [{ text: 'a', audioUrl: 'https://x/a.wav', durationMs: 1000 }],
+      })
+    ).rejects.toThrow('aborted')
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://reel-renderer.example.com/render',
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    )
+  })
+
   it('REEL_RENDERER_URL tanımlı değilse hata fırlatır', async () => {
     delete process.env.REEL_RENDERER_URL
 

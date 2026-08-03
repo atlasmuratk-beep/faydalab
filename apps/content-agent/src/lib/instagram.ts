@@ -17,7 +17,7 @@ async function requestGraphApi(url: string, init?: RequestInit): Promise<Respons
 }
 
 const CONTAINER_STATUS_MAX_ATTEMPTS = 10
-const REEL_CONTAINER_STATUS_MAX_ATTEMPTS = 30
+const REEL_CONTAINER_STATUS_MAX_ATTEMPTS = 75
 const CONTAINER_STATUS_POLL_INTERVAL_MS = 2000
 
 // Instagram, medya container'ını arka planda (görseli indirip işleyerek) hazırlar;

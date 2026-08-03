@@ -63,7 +63,9 @@ export async function POST(request: Request) {
 
   let backgroundImageUrl: string
   try {
-    backgroundImageUrl = await withRetry(() => generateImage(`${script.topic}: ${script.hook}`))
+    backgroundImageUrl = await withRetry(() =>
+      generateImage(`${script.topic}: ${script.hook}`, '1024x1536')
+    )
   } catch (error) {
     await sendAlert(`Reel arka plan görseli üretimi başarısız oldu: ${(error as Error).message}`)
     return NextResponse.json({ error: 'image_generation_failed' }, { status: 500 })
@@ -90,6 +92,7 @@ export async function POST(request: Request) {
         topic: script.topic,
         caption: sentences.join(' '),
         hashtags: script.hashtags,
+        imageUrl: backgroundImageUrl,
         videoUrl,
         status: 'PENDING_APPROVAL',
       },

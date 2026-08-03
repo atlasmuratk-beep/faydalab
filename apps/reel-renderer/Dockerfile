@@ -18,13 +18,14 @@ RUN apt install -y \
   libpango-1.0-0 \
   libcairo2 \
   libcups2 \
+  fonts-liberation \
   --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm install
+RUN npm ci
 
 COPY tsconfig.json ./
 COPY src ./src

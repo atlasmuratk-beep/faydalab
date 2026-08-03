@@ -82,7 +82,11 @@ describe('POST /api/generate-reel', () => {
     })
     expect(mocks.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ format: 'REEL', videoUrl: 'https://example.com/video.mp4' }),
+        data: expect.objectContaining({
+          format: 'REEL',
+          imageUrl: 'https://example.com/bg.png',
+          videoUrl: 'https://example.com/video.mp4',
+        }),
       })
     )
     expect(mocks.sendReelPreview).toHaveBeenCalled()

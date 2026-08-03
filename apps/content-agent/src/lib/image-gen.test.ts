@@ -47,6 +47,26 @@ describe('generateImage', () => {
     expect(options).toEqual({ access: 'public', contentType: 'image/png' })
   })
 
+  it('size parametresi geçilirse OpenAI çağrısına doğru size değeri gider', async () => {
+    mockGenerate.mockResolvedValue({ data: [{ b64_json: FAKE_B64 }] })
+
+    await generateImage('dikey reel arka planı', '1024x1536')
+
+    expect(mockGenerate).toHaveBeenCalledWith(
+      expect.objectContaining({ size: '1024x1536' })
+    )
+  })
+
+  it('size parametresi geçilmezse varsayılan olarak kare (1024x1024) kullanılır', async () => {
+    mockGenerate.mockResolvedValue({ data: [{ b64_json: FAKE_B64 }] })
+
+    await generateImage('kare post arka planı')
+
+    expect(mockGenerate).toHaveBeenCalledWith(
+      expect.objectContaining({ size: '1024x1024' })
+    )
+  })
+
   it('base64 veri dönmezse hata fırlatır ve yükleme yapmaz', async () => {
     mockGenerate.mockResolvedValue({ data: [{}] })
 

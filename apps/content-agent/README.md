@@ -22,7 +22,7 @@ FaydaLab Faz 1a/1b — Instagram statik ve reel içerik üretim, onay ve yayın 
 | `POST /api/token/refresh` | n8n haftalık cron | Instagram access token'ını yeniler |
 | `POST /api/token/seed` | Elle, tek seferlik (n8n tetiklemez) | Uzun ömürlü Instagram token'ını veritabanına ilk kez yükler |
 
-Tüm iç endpoint'ler (`/api/generate`, `/api/publish`, `/api/token/refresh`, `/api/token/seed`) `Authorization: Bearer $INTERNAL_API_SECRET` header'ı gerektirir.
+Tüm iç endpoint'ler (`/api/generate`, `/api/generate-reel`, `/api/publish`, `/api/token/refresh`, `/api/token/seed`) `Authorization: Bearer $INTERNAL_API_SECRET` header'ı gerektirir.
 
 n8n workflow kurulumu ve Telegram webhook kaydı için: [docs/n8n-workflows.md](docs/n8n-workflows.md)
 

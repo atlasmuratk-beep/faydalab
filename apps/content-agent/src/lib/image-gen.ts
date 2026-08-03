@@ -13,14 +13,17 @@ function openaiClient(): OpenAI {
   return client
 }
 
-export async function generateImage(prompt: string): Promise<string> {
+export async function generateImage(
+  prompt: string,
+  size: '1024x1024' | '1024x1536' = '1024x1024'
+): Promise<string> {
   // gpt-image-1 her zaman base64 döner (url alanı bu model için desteklenmiyor).
   // Ayrıca OpenAI görsel URL'leri ~60 dakikada sona erdiği için, yayın ertesi güne
   // zamanlandığından görseli kalıcı depolamaya (Vercel Blob) yüklüyoruz.
   const result = await openaiClient().images.generate({
     model: 'gpt-image-1',
     prompt: `${prompt}\n\n${BRAND_VISUAL_DIRECTIVE}`,
-    size: '1024x1024',
+    size,
   })
 
   const image = result.data?.[0]

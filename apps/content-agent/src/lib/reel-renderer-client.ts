@@ -31,6 +31,9 @@ export async function renderReel(input: RenderReelInput): Promise<RenderReelResu
       Authorization: `Bearer ${secret}`,
     },
     body: JSON.stringify(input),
+    // 180 sn: maxDuration=300'lük toplam bütçenin geri kalanını script/TTS/görsel/
+    // Telegram adımlarına bırakır ve fonksiyon sessizce öldürülmeden önce hata fırlatmayı sağlar.
+    signal: AbortSignal.timeout(180_000),
   })
 
   if (!response.ok) {

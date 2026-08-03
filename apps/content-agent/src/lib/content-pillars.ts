@@ -1,12 +1,13 @@
-import type { ContentPillar } from '@prisma/client'
+import type { ContentFormat, ContentPillar } from '@prisma/client'
 
 export type PillarStore = {
   contentItem: {
     findFirst: (args: {
+      where: { format: ContentFormat }
       orderBy: { createdAt: 'desc' }
     }) => Promise<{ pillar: ContentPillar } | null>
     findMany: (args: {
-      where: { pillar: ContentPillar }
+      where: { pillar: ContentPillar; format: ContentFormat }
       orderBy: { createdAt: 'desc' }
       take: number
       select: { topic: true }
@@ -14,8 +15,14 @@ export type PillarStore = {
   }
 }
 
-export async function getNextPillar(db: PillarStore): Promise<ContentPillar> {
-  const lastItem = await db.contentItem.findFirst({ orderBy: { createdAt: 'desc' } })
+export async function getNextPillar(
+  db: PillarStore,
+  format: ContentFormat
+): Promise<ContentPillar> {
+  const lastItem = await db.contentItem.findFirst({
+    where: { format },
+    orderBy: { createdAt: 'desc' },
+  })
 
   if (!lastItem) {
     return 'AI_AUTOMATION'
@@ -27,10 +34,11 @@ export async function getNextPillar(db: PillarStore): Promise<ContentPillar> {
 export async function getRecentTopics(
   db: PillarStore,
   pillar: ContentPillar,
+  format: ContentFormat,
   limit = 20
 ): Promise<string[]> {
   const items = await db.contentItem.findMany({
-    where: { pillar },
+    where: { pillar, format },
     orderBy: { createdAt: 'desc' },
     take: limit,
     select: { topic: true },

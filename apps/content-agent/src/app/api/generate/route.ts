@@ -30,8 +30,8 @@ export async function POST(request: Request) {
   let pillar
   let recentTopics: string[]
   try {
-    pillar = await getNextPillar(prisma)
-    recentTopics = await getRecentTopics(prisma, pillar)
+    pillar = await getNextPillar(prisma, 'STATIC')
+    recentTopics = await getRecentTopics(prisma, pillar, 'STATIC')
   } catch (error) {
     await sendAlert(`İçerik sütunu seçimi başarısız oldu: ${(error as Error).message}`)
     return NextResponse.json({ error: 'pillar_selection_failed' }, { status: 500 })

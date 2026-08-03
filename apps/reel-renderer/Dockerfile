@@ -37,6 +37,11 @@ COPY src ./src
 RUN node_modules/.bin/remotion browser ensure
 
 ENV PORT=3001
+# Node'un V8 heap'i, container'da gerçekte ne kadar RAM olursa olsun
+# varsayılan olarak ~2GB'da sınırlı kalıyor ve bunu aşınca "JavaScript heap
+# out of memory" ile çöküyor (Railway 8GB tanımlı olsa bile). Bundling +
+# render sırasında bu limite takılmamak için açıkça yükseltiyoruz.
+ENV NODE_OPTIONS=--max-old-space-size=6144
 EXPOSE 3001
 
 CMD ["node_modules/.bin/tsx", "src/server.ts"]

@@ -1,6 +1,6 @@
 # FaydaLab Content Agent
 
-FaydaLab Faz 1a — Instagram statik içerik üretim, onay ve yayın hattı. Tasarım: [../../docs/superpowers/specs/2026-08-02-instagram-content-agent-design.md](../../docs/superpowers/specs/2026-08-02-instagram-content-agent-design.md)
+FaydaLab Faz 1a/1b — Instagram statik ve reel içerik üretim, onay ve yayın hattı. Tasarım: [../../docs/superpowers/specs/2026-08-02-instagram-content-agent-design.md](../../docs/superpowers/specs/2026-08-02-instagram-content-agent-design.md), [../../docs/superpowers/specs/2026-08-03-reels-video-automation-design.md](../../docs/superpowers/specs/2026-08-03-reels-video-automation-design.md)
 
 ## Kurulum
 
@@ -16,6 +16,7 @@ FaydaLab Faz 1a — Instagram statik içerik üretim, onay ve yayın hattı. Tas
 | Endpoint | Tetikleyici | Amaç |
 |---|---|---|
 | `POST /api/generate` | n8n günlük tetikleyici | Yeni içerik üretir, Telegram'a önizleme gönderir |
+| `POST /api/generate-reel` | n8n haftalık tetikleyici (2x) | Yeni reel üretir (script + TTS + görsel + render), Telegram'a video önizlemesi gönderir |
 | `POST /api/telegram/webhook` | Telegram | Onay/red callback'lerini işler (secret `X-Telegram-Bot-Api-Secret-Token` header'ında gelir) |
 | `POST /api/publish` | n8n zamanlanmış cron | Onaylı ve zamanı gelen içeriği yayınlar |
 | `POST /api/token/refresh` | n8n haftalık cron | Instagram access token'ını yeniler |

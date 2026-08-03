@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   updateMany: vi.fn(),
   findUnique: vi.fn(),
   publishImage: vi.fn(),
+  publishReel: vi.fn(),
   sendAlert: vi.fn(),
 }))
 
@@ -19,7 +20,7 @@ vi.mock('@/lib/db', () => ({
     integrationToken: { findUnique: mocks.findUnique },
   },
 }))
-vi.mock('@/lib/instagram', () => ({ publishImage: mocks.publishImage }))
+vi.mock('@/lib/instagram', () => ({ publishImage: mocks.publishImage, publishReel: mocks.publishReel }))
 vi.mock('@/lib/telegram', () => ({ sendAlert: mocks.sendAlert }))
 
 import { POST } from './route'
@@ -81,12 +82,18 @@ describe('POST /api/publish', () => {
     )
   })
 
-  it('yalnızca görseli olan içerikleri sorgular', async () => {
+  it('onaylı ve zamanı gelmiş, medyası hazır içerikleri sorgular', async () => {
     await POST(makeRequest())
 
     expect(mocks.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ status: 'APPROVED', imageUrl: { not: null } }),
+        where: expect.objectContaining({
+          status: 'APPROVED',
+          OR: [
+            { format: 'STATIC', imageUrl: { not: null } },
+            { format: 'REEL', videoUrl: { not: null } },
+          ],
+        }),
       })
     )
   })
@@ -191,5 +198,19 @@ describe('POST /api/publish', () => {
     expect(mocks.findMany).not.toHaveBeenCalled()
     expect(mocks.publishImage).not.toHaveBeenCalled()
     expect(mocks.sendAlert).toHaveBeenCalledWith(expect.stringContaining('token bulunamadı'))
+  })
+
+  it('format REEL olan içerikleri publishReel ile yayınlar', async () => {
+    mocks.findMany.mockResolvedValue([
+      { id: 'reel-1', format: 'REEL', caption: 'C', hashtags: [], videoUrl: 'https://x/video.mp4' },
+    ])
+    mocks.publishReel.mockResolvedValue({ mediaId: 'media-reel-1' })
+
+    const response = await POST(makeRequest())
+    const body = await response.json()
+
+    expect(body.results[0]).toEqual({ id: 'reel-1', status: 'published' })
+    expect(mocks.publishReel).toHaveBeenCalledWith('', 'ig-user-1', 'https://x/video.mp4', expect.any(String))
+    expect(mocks.publishImage).not.toHaveBeenCalled()
   })
 })

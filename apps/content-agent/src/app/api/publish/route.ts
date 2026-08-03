@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { publishImage } from '@/lib/instagram'
+import { publishImage, publishReel } from '@/lib/instagram'
 import { sendAlert } from '@/lib/telegram'
 import { verifyInternalAuthHeader } from '@/lib/auth'
 
@@ -42,7 +42,14 @@ export async function POST(request: Request) {
 
   const now = new Date()
   const claimed = await prisma.contentItem.findMany({
-    where: { status: 'APPROVED', scheduledFor: { lte: now }, imageUrl: { not: null } },
+    where: {
+      status: 'APPROVED',
+      scheduledFor: { lte: now },
+      OR: [
+        { format: 'STATIC', imageUrl: { not: null } },
+        { format: 'REEL', videoUrl: { not: null } },
+      ],
+    },
   })
 
   const results: { id: string; status: 'published' | 'failed' | 'skipped' }[] = []
@@ -61,12 +68,10 @@ export async function POST(request: Request) {
 
     try {
       const fullCaption = `${item.caption}\n\n${item.hashtags.map((h: string) => `#${h}`).join(' ')}`
-      const { mediaId } = await publishImage(
-        accessToken,
-        process.env.INSTAGRAM_USER_ID!,
-        item.imageUrl!,
-        fullCaption
-      )
+      const { mediaId } =
+        item.format === 'REEL'
+          ? await publishReel(accessToken, process.env.INSTAGRAM_USER_ID!, item.videoUrl!, fullCaption)
+          : await publishImage(accessToken, process.env.INSTAGRAM_USER_ID!, item.imageUrl!, fullCaption)
       try {
         await prisma.contentItem.update({
           where: { id: item.id },

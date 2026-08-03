@@ -86,7 +86,10 @@ export function createApp(): Express {
 
       res.json({ videoUrl: blob.url })
     } catch (error) {
-      res.status(500).json({ error: 'render_failed', message: (error as Error).message })
+      // Hata detayı (dosya yolları, Remotion/Chromium iç mesajları içerebilir)
+      // yalnızca sunucu loguna yazılır; istemciye genel bir hata dönülür.
+      console.error('Reel render hatası:', error)
+      res.status(500).json({ error: 'render_failed' })
     }
   })
 

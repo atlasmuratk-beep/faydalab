@@ -15,14 +15,10 @@ const segmentSchema = z.object({
 
 const MAX_TOTAL_DURATION_MS = 120_000
 
-const renderRequestSchema = z
-  .object({
-    backgroundImageUrl: z.string().url(),
-    segments: z.array(segmentSchema).min(1),
-  })
-  .refine((data) => data.segments.reduce((sum, s) => sum + s.durationMs, 0) <= MAX_TOTAL_DURATION_MS, {
-    message: `Toplam segment süresi ${MAX_TOTAL_DURATION_MS}ms'yi aşıyor — muhtemelen hatalı bir durationMs değeri var`,
-  })
+const renderRequestSchema = z.object({
+  backgroundImageUrl: z.string().url(),
+  segments: z.array(segmentSchema).min(1),
+})
 
 function timingSafeEqualStrings(a: string, b: string): boolean {
   if (a.length !== b.length) return false
@@ -72,6 +68,16 @@ export function createApp(): Express {
 
     const { backgroundImageUrl, segments } = parsed.data
     const inputProps = { backgroundImageUrl, segments }
+
+    const totalDurationMs = segments.reduce((sum, s) => sum + s.durationMs, 0)
+    if (totalDurationMs > MAX_TOTAL_DURATION_MS) {
+      res.status(400).json({
+        error: 'duration_too_long',
+        totalDurationMs,
+        segmentDurationsMs: segments.map((s) => s.durationMs),
+      })
+      return
+    }
 
     try {
       const serveUrl = await getBundleLocation()

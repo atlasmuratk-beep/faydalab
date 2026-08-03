@@ -71,6 +71,10 @@ export function createApp(): Express {
       const serveUrl = await getBundleLocation()
       const composition = await selectComposition({ serveUrl, id: 'Reel', inputProps })
 
+      console.log(
+        `Reel render başlıyor: ${segments.length} segment, toplam durationMs=${segments.reduce((sum, s) => sum + s.durationMs, 0)}, durationInFrames=${composition.durationInFrames}`
+      )
+
       const outputPath = path.join(os.tmpdir(), `reel-${Date.now()}.mp4`)
 
       await renderMedia({

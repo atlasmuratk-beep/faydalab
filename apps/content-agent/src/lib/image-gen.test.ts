@@ -31,8 +31,14 @@ describe('generateImage', () => {
 
     expect(result).toBe('https://blob.vercel-storage.com/fake.png')
     expect(mockGenerate).toHaveBeenCalledWith(
-      expect.objectContaining({ model: 'gpt-image-1', prompt: 'minimal dashboard illustration' })
+      expect.objectContaining({
+        model: 'gpt-image-1',
+        prompt: expect.stringContaining('minimal dashboard illustration'),
+      })
     )
+    const sentPrompt = mockGenerate.mock.calls[0][0].prompt as string
+    expect(sentPrompt).toContain('#D4AF37')
+    expect(sentPrompt).toContain('#0B0B0D')
 
     const [pathname, body, options] = mockPut.mock.calls[0]
     expect(pathname).toMatch(/^content-images\/\d+\.png$/)

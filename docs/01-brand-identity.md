@@ -58,11 +58,26 @@ Hesap tek konulu değil, çok sütunlu bir içerik stratejisi izler:
 - Vaat edilemeyecek sonuçlar asla vaat edilmez
 - Müşteri vaka çalışmaları (gazi-usta, Gelecek Rehberlik gibi canlı projeler) somut kanıt olarak kullanılır — bkz. [10-roadmap.md](10-roadmap.md)
 
-## Görsel Kimlik — Bekleyen Karar
+## Görsel Kimlik (2026-08-03 kararlaştırıldı)
 
-Aşağıdakiler henüz kararlaştırılmadı, ayrı bir tasarım oturumunda ele alınacak:
+Marka kişiliği: premium, minimal, modern, yenilikçi, güven veren, insan-odaklı, teknoloji-odaklı, zamansız. İlham alınan tasarım felsefesi (doğrudan taklit değil): Apple, Stripe, Notion, Linear, Framer, OpenAI — minimalizm, kusursuz boşluk kullanımı, güçlü tipografi, temiz hiyerarşi.
 
-- Logo yönü
-- Renk paleti
-- Tipografi
-- UI/UX tasarım dili (bkz. [14-ui-ux-design-system.md](14-ui-ux-design-system.md))
+**Renk paleti:**
+
+| Rol | Hex |
+|---|---|
+| Arka plan | `#0B0B0D` |
+| Ana metin | `#F5F5F5` |
+| Vurgu (altın) | `#D4AF37` |
+| İkincil metin | `#B8BDC7` |
+| Kart/ayraç | `#2A2A2F` |
+
+**Tipografi:** Başlık — Bebas Neue (yoksa Anton); alt başlık — Sora SemiBold; gövde metni — Inter Regular. Büyük başlıklar, yüksek okunabilirlik, bol boşluk.
+
+**Tasarım ilkeleri:** Temiz düzenler, kasıtlı boşluk kullanımı, gerektiğinde ince gölgeler, zarif ikonografi. Kaçınılacaklar: aşırı parlama/neon efektler, sahte holografik görünüm, rastgele gradyanlar, aşırı 3D, görsel karmaşa — genel olarak "yapay zeka üretimi gibi görünen" her şey.
+
+**Fotoğraf kullanımı:** Gerçekçi, profesyonel, otantik iş ortamları (ofis, restoran, toplantı, teknoloji). Sahte/gerçekçi olmayan yüzlerden kaçınılır.
+
+**Logo kullanım kuralı:** Resmi FaydaLab logosu (beyaz "FA" monogramı) olduğu gibi kullanılır — yeniden çizilmez, yeniden yorumlanmaz, oranları değiştirilmez. **Bilinen sınırlama:** metin-tabanlı AI görsel üretimi (gpt-image-1) piksel-hassasiyetinde logo tekrarı garanti edemez; şu anki içerik hattı (`apps/content-agent`) AI ile ürettiği görsellere logo eklemiyor, sadece renk paleti ve stil tutarlılığını hedefliyor. Piksel-hassas logo yerleşimi istenirse ileride bir şablon/overlay sistemi (Faz 1b'deki Remotion yaklaşımına benzer) gerekir.
+
+UI/UX tasarım dili detayları için bkz. [14-ui-ux-design-system.md](14-ui-ux-design-system.md).

@@ -1,5 +1,6 @@
 import OpenAI from 'openai'
 import { put } from '@vercel/blob'
+import { BRAND_VISUAL_DIRECTIVE } from './style-guide'
 
 // İstemci tembel kurulur: SDK, anahtar yoksa kurucuda hata fırlattığı için
 // modül seviyesinde kurmak `next build` sırasında (env yokken) derlemeyi bozar.
@@ -18,7 +19,7 @@ export async function generateImage(prompt: string): Promise<string> {
   // zamanlandığından görseli kalıcı depolamaya (Vercel Blob) yüklüyoruz.
   const result = await openaiClient().images.generate({
     model: 'gpt-image-1',
-    prompt,
+    prompt: `${prompt}\n\n${BRAND_VISUAL_DIRECTIVE}`,
     size: '1024x1024',
   })
 

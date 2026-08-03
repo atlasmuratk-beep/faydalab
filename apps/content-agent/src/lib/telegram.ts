@@ -44,6 +44,42 @@ export async function sendContentPreview(
   return { chatId: String(data.result.chat.id), messageId: String(data.result.message_id) }
 }
 
+export async function sendReelPreview(
+  contentItemId: string,
+  videoUrl: string,
+  caption: string
+): Promise<TelegramSendResult> {
+  const chatId = process.env.TELEGRAM_CHAT_ID
+  if (!chatId) {
+    throw new Error('TELEGRAM_CHAT_ID ortam değişkeni tanımlı değil')
+  }
+
+  const response = await fetch(`${apiBase()}/sendVideo`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      video: videoUrl,
+      caption,
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: '✅ Onayla', callback_data: `approve:${contentItemId}` },
+            { text: '❌ Reddet', callback_data: `reject:${contentItemId}` },
+          ],
+        ],
+      },
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Telegram sendVideo başarısız: ${response.status} ${await response.text()}`)
+  }
+
+  const data = await response.json()
+  return { chatId: String(data.result.chat.id), messageId: String(data.result.message_id) }
+}
+
 export async function answerCallbackQuery(callbackQueryId: string, text: string): Promise<void> {
   await fetch(`${apiBase()}/answerCallbackQuery`, {
     method: 'POST',

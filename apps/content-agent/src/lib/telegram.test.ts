@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { sendContentPreview, answerCallbackQuery, sendAlert } from './telegram'
+import { sendContentPreview, sendReelPreview, answerCallbackQuery, sendAlert } from './telegram'
 
 describe('telegram', () => {
   beforeEach(() => {
@@ -58,5 +58,52 @@ describe('telegram', () => {
     expect(consoleError).toHaveBeenCalled()
 
     consoleError.mockRestore()
+  })
+})
+
+describe('sendReelPreview', () => {
+  beforeEach(() => {
+    vi.unstubAllGlobals()
+    process.env.TELEGRAM_BOT_TOKEN = 'test-token'
+    process.env.TELEGRAM_CHAT_ID = '12345'
+  })
+
+  it('sendVideo çağrısı yapar ve onay/red butonlarını ekler', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ result: { chat: { id: 12345 }, message_id: 99 } }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await sendReelPreview('content-1', 'https://x/video.mp4', 'Caption metni')
+
+    expect(result).toEqual({ chatId: '12345', messageId: '99' })
+    const [url, options] = fetchMock.mock.calls[0]
+    expect(url).toContain('/sendVideo')
+    const body = JSON.parse(options.body)
+    expect(body.video).toBe('https://x/video.mp4')
+    expect(body.reply_markup.inline_keyboard[0]).toEqual([
+      { text: '✅ Onayla', callback_data: 'approve:content-1' },
+      { text: '❌ Reddet', callback_data: 'reject:content-1' },
+    ])
+  })
+
+  it('TELEGRAM_CHAT_ID tanımlı değilse hata fırlatır', async () => {
+    delete process.env.TELEGRAM_CHAT_ID
+
+    await expect(sendReelPreview('content-1', 'https://x/video.mp4', 'Caption')).rejects.toThrow(
+      'TELEGRAM_CHAT_ID'
+    )
+  })
+
+  it('Telegram hata dönerse hata fırlatır', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 400, text: async () => 'bad request' })
+    )
+
+    await expect(sendReelPreview('content-1', 'https://x/video.mp4', 'Caption')).rejects.toThrow(
+      'Telegram sendVideo başarısız'
+    )
   })
 })

@@ -66,3 +66,49 @@ export async function generateCaption(
   // bunu diğer üretim hataları gibi yakalayıp yeniden dener.
   return generatedCaptionSchema.parse(JSON.parse(textBlock.text))
 }
+
+export const generatedReelScriptSchema = z.object({
+  topic: z.string(),
+  hook: z.string(),
+  beats: z.array(z.string()).min(1),
+  cta: z.string(),
+  hashtags: z.array(z.string()),
+})
+
+export type GeneratedReelScript = z.infer<typeof generatedReelScriptSchema>
+
+export async function generateReelScript(
+  pillar: ContentPillar,
+  recentTopics: string[]
+): Promise<GeneratedReelScript> {
+  const message = await anthropicClient().messages.create({
+    model: 'claude-sonnet-5',
+    max_tokens: 1024,
+    system: `Sen FaydaLab için bilgilendirici ve ikna edici, yüzsüz (seslendirmeli) Instagram reels senaryoları yazan bir içerik yazarısın. ${STYLE_GUIDE}`,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          PILLAR_PROMPTS[pillar],
+          recentTopics.length > 0
+            ? `Şu konular son zamanlarda kullanıldı, tekrar etme: ${recentTopics.join(', ')}.`
+            : '',
+          'Bu konuda 20-30 saniyelik bir reel senaryosu yaz. Kısa, güçlü cümleler kullan; her cümle tek başına seslendirilecek ve altyazı olarak ekranda görünecek. Açılış kancası (hook), 2-4 bilgi/fayda cümlesi (beats) ve bir kapanış çağrısı (cta) olsun.',
+          'Yanıtı sadece şu JSON formatında ver, başka hiçbir metin ekleme: {"topic": string, "hook": string, "beats": string[], "cta": string, "hashtags": string[]}',
+        ]
+          .filter(Boolean)
+          .join('\n\n'),
+      },
+    ],
+  })
+
+  const textBlock = message.content.find((block: { type: string }) => block.type === 'text') as
+    | { type: 'text'; text: string }
+    | undefined
+
+  if (!textBlock) {
+    throw new Error('Claude yanıtında metin bloğu bulunamadı')
+  }
+
+  return generatedReelScriptSchema.parse(JSON.parse(textBlock.text))
+}

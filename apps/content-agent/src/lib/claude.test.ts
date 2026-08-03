@@ -10,7 +10,7 @@ vi.mock('@anthropic-ai/sdk', () => ({
   },
 }))
 
-import { generateCaption } from './claude'
+import { generateCaption, generateReelScript } from './claude'
 
 describe('generateCaption', () => {
   beforeEach(() => {
@@ -73,5 +73,63 @@ describe('generateCaption', () => {
     await expect(generateCaption('AI_AUTOMATION', [])).rejects.toThrow(
       'Claude yanıtında metin bloğu bulunamadı'
     )
+  })
+})
+
+describe('generateReelScript', () => {
+  beforeEach(() => {
+    mockCreate.mockReset()
+  })
+
+  it('Claude yanıtını parse edip GeneratedReelScript döner', async () => {
+    mockCreate.mockResolvedValue({
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            topic: 'AI ile randevu yönetimi',
+            hook: 'Randevularınızı unutmaktan bıktınız mı?',
+            beats: ['Birinci fayda cümlesi.', 'İkinci fayda cümlesi.'],
+            cta: 'Konuşalım.',
+            hashtags: ['yapayzeka', 'otomasyon'],
+          }),
+        },
+      ],
+    })
+
+    const result = await generateReelScript('AI_AUTOMATION', [])
+
+    expect(result.hook).toBe('Randevularınızı unutmaktan bıktınız mı?')
+    expect(result.beats).toHaveLength(2)
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ model: 'claude-sonnet-5' })
+    )
+  })
+
+  it('şemaya uymayan JSON yanıtında hata fırlatır', async () => {
+    mockCreate.mockResolvedValue({
+      content: [{ type: 'text', text: JSON.stringify({ topic: 'Konu' }) }],
+    })
+
+    await expect(generateReelScript('AI_AUTOMATION', [])).rejects.toThrow()
+  })
+
+  it('beats dizisi boşsa hata fırlatır', async () => {
+    mockCreate.mockResolvedValue({
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            topic: 'Konu',
+            hook: 'Kanca',
+            beats: [],
+            cta: 'CTA',
+            hashtags: [],
+          }),
+        },
+      ],
+    })
+
+    await expect(generateReelScript('AI_AUTOMATION', [])).rejects.toThrow()
   })
 })

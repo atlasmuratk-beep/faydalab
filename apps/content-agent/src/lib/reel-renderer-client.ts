@@ -19,11 +19,16 @@ export async function renderReel(input: RenderReelInput): Promise<RenderReelResu
     throw new Error('REEL_RENDERER_URL ortam değişkeni tanımlı değil')
   }
 
+  const secret = process.env.INTERNAL_API_SECRET
+  if (!secret) {
+    throw new Error('INTERNAL_API_SECRET ortam değişkeni tanımlı değil')
+  }
+
   const response = await fetch(`${rendererUrl}/render`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.INTERNAL_API_SECRET}`,
+      Authorization: `Bearer ${secret}`,
     },
     body: JSON.stringify(input),
   })

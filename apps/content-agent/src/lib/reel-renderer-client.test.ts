@@ -48,4 +48,12 @@ describe('renderReel', () => {
       renderReel({ backgroundImageUrl: 'https://x/img.png', segments: [] })
     ).rejects.toThrow('Reel render isteği başarısız')
   })
+
+  it('INTERNAL_API_SECRET tanımlı değilse hata fırlatır', async () => {
+    delete process.env.INTERNAL_API_SECRET
+
+    await expect(
+      renderReel({ backgroundImageUrl: 'https://x/img.png', segments: [] })
+    ).rejects.toThrow('INTERNAL_API_SECRET')
+  })
 })

@@ -37,10 +37,19 @@ function parseWavDurationMs(buffer: Buffer): number {
     if (chunkId === 'fmt ') {
       byteRate = buffer.readUInt32LE(chunkDataStart + 8)
     } else if (chunkId === 'data') {
-      dataSize = chunkSize
+      // OpenAI TTS akışlı (streaming) yanıt döndürüyor: yazım anında toplam
+      // boyut bilinmediği için header'a genelde 0xFFFFFFFF (placeholder)
+      // yazılıyor. Header'daki beyan edilen boyuta güvenmek yerine buffer'da
+      // GERÇEKTE kalan byte sayısını kullanıyoruz — bu her zaman doğru olan tek değer.
+      const actualRemainingBytes = buffer.length - chunkDataStart
+      dataSize = chunkSize > actualRemainingBytes ? actualRemainingBytes : chunkSize
     }
 
-    offset = chunkDataStart + chunkSize + (chunkSize % 2)
+    // chunkSize header'da placeholder olabileceğinden, sonraki chunk'a
+    // geçerken de gerçek kalan boyutla sınırlıyoruz (aksi halde offset
+    // buffer'ın çok ötesine sıçrar ve döngü hemen sona erer).
+    const effectiveChunkSize = Math.min(chunkSize, buffer.length - chunkDataStart)
+    offset = chunkDataStart + effectiveChunkSize + (effectiveChunkSize % 2)
   }
 
   if (byteRate === null || dataSize === null) {

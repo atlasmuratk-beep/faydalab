@@ -64,6 +64,23 @@ describe('generateSpeech', () => {
     )
   })
 
+  it('data chunk boyutu 0xFFFFFFFF (streaming placeholder) olduğunda gerçek buffer uzunluğuna göre süre hesaplar', async () => {
+    const wavBuffer = makeSilentWavBuffer(2)
+    // OpenAI'nin akışlı (streaming) yanıtını simüle et: data chunk'ın
+    // beyan edilen boyutu, gerçek buffer boyutundan çok daha büyük bir
+    // placeholder (0xFFFFFFFF) olarak yazılıyor.
+    wavBuffer.writeUInt32LE(0xffffffff, 40)
+    mockSpeechCreate.mockResolvedValue({
+      arrayBuffer: async () => wavBuffer.buffer.slice(wavBuffer.byteOffset, wavBuffer.byteOffset + wavBuffer.byteLength),
+    })
+
+    const result = await generateSpeech('Test cümlesi')
+
+    // Gerçek buffer 2 saniyelik ses içeriyor; placeholder'a rağmen doğru
+    // süre (yaklaşık 89478485ms değil) hesaplanmalı.
+    expect(result.durationMs).toBe(2000)
+  })
+
   it('geçersiz WAV verisinde hata fırlatır', async () => {
     mockSpeechCreate.mockResolvedValue({
       arrayBuffer: async () => Buffer.from('not a wav file').buffer,

@@ -2,11 +2,16 @@ import { NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { validateSectionContent, type SectionType } from '@/lib/sections'
+import { requireSession } from '@/lib/auth'
 
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const userId = await requireSession()
+  if (!userId) {
+    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
+  }
   const { id } = await params
   const body = await req.json()
   const updateData: { content?: Prisma.InputJsonValue; visible?: boolean } = {}
@@ -41,6 +46,10 @@ export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const userId = await requireSession()
+  if (!userId) {
+    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
+  }
   const { id } = await params
   try {
     await prisma.section.delete({ where: { id } })

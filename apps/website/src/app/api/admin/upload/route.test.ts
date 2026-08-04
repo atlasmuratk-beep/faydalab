@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mocks = vi.hoisted(() => ({ put: vi.fn() }))
 vi.mock('@vercel/blob', () => ({ put: mocks.put }))
+vi.mock('@/lib/auth', () => ({ requireSession: vi.fn().mockResolvedValue('user-1') }))
 
 import { POST } from './route'
 

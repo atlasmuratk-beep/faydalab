@@ -4,11 +4,13 @@ const mocks = vi.hoisted(() => ({
   findMany: vi.fn(),
   create: vi.fn(),
   aggregate: vi.fn(),
+  requireSession: vi.fn(),
 }))
 
 vi.mock('@/lib/db', () => ({
   prisma: { section: { findMany: mocks.findMany, create: mocks.create, aggregate: mocks.aggregate } },
 }))
+vi.mock('@/lib/auth', () => ({ requireSession: mocks.requireSession }))
 
 import { GET, POST } from './route'
 
@@ -21,6 +23,12 @@ function makeRequest(body: unknown): Request {
 }
 
 describe('GET /api/admin/sections', () => {
+  beforeEach(() => {
+    mocks.requireSession.mockReset()
+    mocks.requireSession.mockResolvedValue('user-1')
+    mocks.findMany.mockReset()
+  })
+
   it('sıralı section listesini döner', async () => {
     mocks.findMany.mockResolvedValue([{ id: '1', order: 0 }])
     const response = await GET()
@@ -28,12 +36,28 @@ describe('GET /api/admin/sections', () => {
     expect(body).toEqual([{ id: '1', order: 0 }])
     expect(mocks.findMany).toHaveBeenCalledWith({ orderBy: { order: 'asc' } })
   })
+
+  it('oturum yoksa 401 döner', async () => {
+    mocks.requireSession.mockResolvedValue(null)
+    const response = await GET()
+    expect(response.status).toBe(401)
+    expect(mocks.findMany).not.toHaveBeenCalled()
+  })
 })
 
 describe('POST /api/admin/sections', () => {
   beforeEach(() => {
     mocks.create.mockReset()
     mocks.aggregate.mockReset()
+    mocks.requireSession.mockReset()
+    mocks.requireSession.mockResolvedValue('user-1')
+  })
+
+  it('oturum yoksa 401 döner', async () => {
+    mocks.requireSession.mockResolvedValue(null)
+    const response = await POST(makeRequest({ type: 'HERO', content: {} }))
+    expect(response.status).toBe(401)
+    expect(mocks.create).not.toHaveBeenCalled()
   })
 
   it('geçersiz tip için 400 döner', async () => {

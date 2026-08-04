@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { requireSession } from '@/lib/auth'
 
 export async function POST(req: Request) {
+  const userId = await requireSession()
+  if (!userId) {
+    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
+  }
   const { id, direction } = await req.json()
   if (direction !== 'up' && direction !== 'down') {
     return NextResponse.json({ error: 'Geçersiz yön' }, { status: 400 })

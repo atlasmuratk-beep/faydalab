@@ -43,7 +43,19 @@ export default function SettingsPage() {
     })
     if (!res.ok) {
       const body = await res.json()
-      alert(body.error === 'invalid_body' ? 'Bazı alanlar eksik veya geçersiz (Site Başlığı ve Meta Açıklama zorunlu).' : (body.error ?? 'Kaydetme başarısız'))
+      const fieldErrors = body.details?.fieldErrors as Record<string, string[]> | undefined
+      const fieldMsgs = fieldErrors
+        ? Object.entries(fieldErrors)
+            .filter(([, msgs]) => msgs?.length)
+            .map(([field, msgs]) => `${field}: ${msgs![0]}`)
+            .join('\n')
+        : ''
+      alert(
+        fieldMsgs ||
+          (body.error === 'invalid_body'
+            ? 'Bazı alanlar eksik veya geçersiz (Site Başlığı ve Meta Açıklama zorunlu).'
+            : (body.error ?? 'Kaydetme başarısız'))
+      )
       return
     }
     setSaved(true)

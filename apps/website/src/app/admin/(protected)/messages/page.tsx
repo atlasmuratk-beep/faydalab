@@ -1,8 +1,14 @@
+import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/db'
+import { requireSession } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
 export default async function MessagesPage() {
+  const userId = await requireSession()
+  if (!userId) {
+    redirect('/admin/login')
+  }
   const messages = await prisma.contactMessage.findMany({ orderBy: { createdAt: 'desc' } })
 
   return (

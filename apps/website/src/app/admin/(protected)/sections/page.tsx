@@ -29,6 +29,20 @@ const DEFAULT_CONTENT: Record<SectionType, Record<string, unknown>> = {
   CONTACT: { title: '', subtitle: '' },
 }
 
+function buildErrorMessage(body: { error?: string; details?: { fieldErrors?: Record<string, string[]> } }): string {
+  const fieldErrors = body.details?.fieldErrors
+  const fieldMsgs = fieldErrors
+    ? Object.entries(fieldErrors)
+        .filter(([, msgs]) => msgs?.length)
+        .map(([field, msgs]) => `${field}: ${msgs![0]}`)
+        .join('\n')
+    : ''
+  return (
+    fieldMsgs ||
+    (body.error === 'invalid_content' ? 'Bazı alanlar eksik veya geçersiz.' : (body.error ?? 'Kaydetme başarısız'))
+  )
+}
+
 export default function SectionsPage() {
   const [sections, setSections] = useState<SectionRecord[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -90,7 +104,7 @@ export default function SectionsPage() {
     })
     if (!res.ok) {
       const body = await res.json()
-      alert(body.error === 'invalid_content' ? 'Bazı alanlar eksik veya geçersiz, lütfen kontrol edin.' : (body.error ?? 'Kaydetme başarısız'))
+      alert(buildErrorMessage(body))
       return
     }
     setEditingId(null)
@@ -105,7 +119,7 @@ export default function SectionsPage() {
     })
     if (!res.ok) {
       const body = await res.json()
-      alert(body.error === 'invalid_content' ? 'Bazı alanlar eksik veya geçersiz, lütfen kontrol edin.' : (body.error ?? 'Kaydetme başarısız'))
+      alert(buildErrorMessage(body))
       return
     }
     setAddingType('')

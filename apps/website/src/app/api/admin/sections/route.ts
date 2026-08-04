@@ -1,13 +1,22 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { SECTION_TYPES, validateSectionContent, type SectionType } from '@/lib/sections'
+import { requireSession } from '@/lib/auth'
 
 export async function GET() {
+  const userId = await requireSession()
+  if (!userId) {
+    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
+  }
   const sections = await prisma.section.findMany({ orderBy: { order: 'asc' } })
   return NextResponse.json(sections)
 }
 
 export async function POST(req: Request) {
+  const userId = await requireSession()
+  if (!userId) {
+    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
+  }
   const body = await req.json()
   if (!SECTION_TYPES.includes(body.type)) {
     return NextResponse.json({ error: 'Geçersiz section tipi' }, { status: 400 })

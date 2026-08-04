@@ -13,6 +13,7 @@ vi.mock('@/lib/db', () => ({
     $transaction: mocks.transaction,
   },
 }))
+vi.mock('@/lib/auth', () => ({ requireSession: vi.fn().mockResolvedValue('user-1') }))
 
 import { POST } from './route'
 

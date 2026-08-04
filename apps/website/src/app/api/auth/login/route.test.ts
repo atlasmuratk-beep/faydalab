@@ -10,10 +10,10 @@ vi.mock('bcryptjs', () => ({ default: { compare: mocks.compare } }))
 
 import { POST } from './route'
 
-function makeRequest(body: unknown): Request {
+function makeRequest(body: unknown, ip = 'test-ip'): Request {
   return new Request('http://localhost/api/auth/login', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-forwarded-for': ip },
     body: JSON.stringify(body),
   })
 }
@@ -49,5 +49,16 @@ describe('POST /api/auth/login', () => {
     const response = await POST(makeRequest({ username: 'admin', password: 'correct' }))
     expect(response.status).toBe(200)
     expect(response.headers.get('set-cookie')).toContain('faydalab_admin_session=')
+  })
+
+  it('aynı IP dakikada 10 denemeden fazla yaparsa 429 döner', async () => {
+    mocks.findUnique.mockResolvedValue(null)
+    const ip = 'login-rate-limit-ip'
+    for (let i = 0; i < 10; i++) {
+      const response = await POST(makeRequest({ username: 'admin', password: 'wrong' }, ip))
+      expect(response.status).toBe(401)
+    }
+    const eleventh = await POST(makeRequest({ username: 'admin', password: 'wrong' }, ip))
+    expect(eleventh.status).toBe(429)
   })
 })

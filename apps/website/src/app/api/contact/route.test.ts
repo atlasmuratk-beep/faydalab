@@ -10,10 +10,10 @@ vi.mock('@/lib/telegram', () => ({ sendAlert: mocks.sendAlert }))
 
 import { POST } from './route'
 
-function makeRequest(body: unknown): Request {
+function makeRequest(body: unknown, ip = 'test-ip'): Request {
   return new Request('http://localhost/api/contact', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-forwarded-for': ip },
     body: JSON.stringify(body),
   })
 }
@@ -46,5 +46,32 @@ describe('POST /api/contact', () => {
       data: { name: 'Ali', email: 'ali@example.com', message: 'Merhaba' },
     })
     expect(mocks.sendAlert).toHaveBeenCalledWith(expect.stringContaining('Ali'))
+  })
+
+  it('200 karakteri aşan name alanı için 400 döner', async () => {
+    const response = await POST(
+      makeRequest({ name: 'a'.repeat(201), email: 'ali@example.com', message: 'Merhaba' }, 'len-ip-1')
+    )
+    expect(response.status).toBe(400)
+    expect(mocks.create).not.toHaveBeenCalled()
+  })
+
+  it('5000 karakteri aşan message alanı için 400 döner', async () => {
+    const response = await POST(
+      makeRequest({ name: 'Ali', email: 'ali@example.com', message: 'a'.repeat(5001) }, 'len-ip-2')
+    )
+    expect(response.status).toBe(400)
+    expect(mocks.create).not.toHaveBeenCalled()
+  })
+
+  it('aynı IP dakikada 5 istekten fazla gönderirse 429 döner', async () => {
+    mocks.create.mockResolvedValue({ id: 'msg-1' })
+    const ip = 'rate-limit-ip'
+    for (let i = 0; i < 5; i++) {
+      const response = await POST(makeRequest({ name: 'Ali', email: 'ali@example.com', message: 'Merhaba' }, ip))
+      expect(response.status).toBe(201)
+    }
+    const sixth = await POST(makeRequest({ name: 'Ali', email: 'ali@example.com', message: 'Merhaba' }, ip))
+    expect(sixth.status).toBe(429)
   })
 })

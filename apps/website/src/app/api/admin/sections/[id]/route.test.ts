@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/lib/db', () => ({
   prisma: { section: { findUnique: mocks.findUnique, update: mocks.update, delete: mocks.delete } },
 }))
+vi.mock('@/lib/auth', () => ({ requireSession: vi.fn().mockResolvedValue('user-1') }))
 
 import { PATCH, DELETE } from './route'
 

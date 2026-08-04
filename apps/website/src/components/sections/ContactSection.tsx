@@ -9,7 +9,8 @@ export function ContactSection({ content }: { content: ContactContent }) {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setStatus('sending')
-    const form = new FormData(e.currentTarget)
+    const formElement = e.currentTarget
+    const form = new FormData(formElement)
     const res = await fetch('/api/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -21,7 +22,7 @@ export function ContactSection({ content }: { content: ContactContent }) {
     })
     if (res.ok) {
       setStatus('sent')
-      e.currentTarget.reset()
+      formElement.reset()
     } else {
       setStatus('error')
     }

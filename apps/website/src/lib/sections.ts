@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-const safeUrl = z.string().url().refine(
+export const safeUrl = z.string().url().refine(
   (u) => {
     try {
       const protocol = new URL(u).protocol
@@ -26,40 +26,40 @@ const safeCtaLink = z.string().min(1).refine(
 )
 
 export const heroContentSchema = z.object({
-  title: z.string().min(1),
-  subtitle: z.string().min(1),
-  ctaText: z.string().min(1),
+  title: z.string().min(1).max(200),
+  subtitle: z.string().min(1).max(2000),
+  ctaText: z.string().min(1).max(200),
   ctaLink: safeCtaLink,
 })
 
 export const serviceItemSchema = z.object({
-  icon: z.string().min(1),
-  name: z.string().min(1),
-  description: z.string().min(1),
+  icon: z.string().min(1).max(200),
+  name: z.string().min(1).max(200),
+  description: z.string().min(1).max(2000),
 })
 
 export const servicesContentSchema = z.object({
-  title: z.string().min(1),
+  title: z.string().min(1).max(200),
   items: z.array(serviceItemSchema).min(1),
 })
 
 export const caseStudyContentSchema = z.object({
-  projectName: z.string().min(1),
-  needText: z.string().min(1),
-  solutionText: z.string().min(1),
-  resultText: z.string().min(1),
+  projectName: z.string().min(1).max(200),
+  needText: z.string().min(1).max(2000),
+  solutionText: z.string().min(1).max(2000),
+  resultText: z.string().min(1).max(2000),
   imageUrl: safeUrl,
   liveUrl: safeUrl,
 })
 
 export const textBlockContentSchema = z.object({
-  title: z.string().min(1),
-  bodyMarkdown: z.string().min(1),
+  title: z.string().min(1).max(200),
+  bodyMarkdown: z.string().min(1).max(2000),
 })
 
 export const contactContentSchema = z.object({
-  title: z.string().min(1),
-  subtitle: z.string().min(1),
+  title: z.string().min(1).max(200),
+  subtitle: z.string().min(1).max(2000),
 })
 
 export const SECTION_TYPES = ['HERO', 'SERVICES', 'CASE_STUDY', 'TEXT_BLOCK', 'CONTACT'] as const

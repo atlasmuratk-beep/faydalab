@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server'
 import { put } from '@vercel/blob'
+import { requireSession } from '@/lib/auth'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const MAX_SIZE = 8 * 1024 * 1024
 
 export async function POST(req: Request) {
+  const userId = await requireSession()
+  if (!userId) {
+    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
+  }
   const form = await req.formData()
   const file = form.get('file')
   if (!(file instanceof File)) {

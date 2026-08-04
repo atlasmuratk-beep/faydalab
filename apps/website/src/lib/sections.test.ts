@@ -117,4 +117,41 @@ describe('validateSectionContent', () => {
     const result = validateSectionContent('CONTACT', { title: 'İletişim', subtitle: 'Bize ulaşın' })
     expect(result.success).toBe(true)
   })
+
+  it('200 karakteri aşan HERO title alanını reddeder', () => {
+    const result = validateSectionContent('HERO', {
+      title: 'a'.repeat(201),
+      subtitle: 'Alt başlık',
+      ctaText: 'Tıkla',
+      ctaLink: '#iletisim',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('2000 karakteri aşan HERO subtitle alanını reddeder', () => {
+    const result = validateSectionContent('HERO', {
+      title: 'Başlık',
+      subtitle: 'a'.repeat(2001),
+      ctaText: 'Tıkla',
+      ctaLink: '#iletisim',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('2000 karakteri aşan CASE_STUDY needText alanını reddeder', () => {
+    const result = validateSectionContent('CASE_STUDY', {
+      projectName: 'Proje',
+      needText: 'a'.repeat(2001),
+      solutionText: 'çözüm',
+      resultText: 'sonuç',
+      imageUrl: 'https://example.com/img.jpg',
+      liveUrl: 'https://example.com',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('2000 karakteri aşan TEXT_BLOCK bodyMarkdown alanını reddeder', () => {
+    const result = validateSectionContent('TEXT_BLOCK', { title: 'Başlık', bodyMarkdown: 'a'.repeat(2001) })
+    expect(result.success).toBe(false)
+  })
 })

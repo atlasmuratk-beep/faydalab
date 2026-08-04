@@ -44,45 +44,70 @@ export default function SectionsPage() {
   }, [])
 
   async function handleReorder(id: string, direction: 'up' | 'down') {
-    await fetch('/api/admin/sections/reorder', {
+    const res = await fetch('/api/admin/sections/reorder', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, direction }),
     })
+    if (!res.ok) {
+      const body = await res.json()
+      alert(body.error ?? 'İşlem başarısız')
+      return
+    }
     load()
   }
 
   async function handleToggleVisible(section: SectionRecord) {
-    await fetch(`/api/admin/sections/${section.id}`, {
+    const res = await fetch(`/api/admin/sections/${section.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ visible: !section.visible }),
     })
+    if (!res.ok) {
+      const body = await res.json()
+      alert(body.error ?? 'İşlem başarısız')
+      return
+    }
     load()
   }
 
   async function handleDelete(id: string) {
     if (!confirm('Bu section silinsin mi?')) return
-    await fetch(`/api/admin/sections/${id}`, { method: 'DELETE' })
+    const res = await fetch(`/api/admin/sections/${id}`, { method: 'DELETE' })
+    if (!res.ok) {
+      const body = await res.json()
+      alert(body.error ?? 'İşlem başarısız')
+      return
+    }
     load()
   }
 
   async function handleUpdate(id: string, content: Record<string, unknown>) {
-    await fetch(`/api/admin/sections/${id}`, {
+    const res = await fetch(`/api/admin/sections/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content }),
     })
+    if (!res.ok) {
+      const body = await res.json()
+      alert(body.error === 'invalid_content' ? 'Bazı alanlar eksik veya geçersiz, lütfen kontrol edin.' : (body.error ?? 'Kaydetme başarısız'))
+      return
+    }
     setEditingId(null)
     load()
   }
 
   async function handleCreate(type: SectionType, content: Record<string, unknown>) {
-    await fetch('/api/admin/sections', {
+    const res = await fetch('/api/admin/sections', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type, content }),
     })
+    if (!res.ok) {
+      const body = await res.json()
+      alert(body.error === 'invalid_content' ? 'Bazı alanlar eksik veya geçersiz, lütfen kontrol edin.' : (body.error ?? 'Kaydetme başarısız'))
+      return
+    }
     setAddingType('')
     load()
   }

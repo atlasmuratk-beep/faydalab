@@ -17,6 +17,36 @@ describe('validateSectionContent', () => {
     expect(result.success).toBe(false)
   })
 
+  it('javascript: şemalı ctaLink içeren HERO içeriğini reddeder', () => {
+    const result = validateSectionContent('HERO', {
+      title: 'Başlık',
+      subtitle: 'Alt başlık',
+      ctaText: 'Tıkla',
+      ctaLink: 'javascript:alert(1)',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('/ ile başlayan yol ctaLink içeren HERO içeriğini kabul eder', () => {
+    const result = validateSectionContent('HERO', {
+      title: 'Başlık',
+      subtitle: 'Alt başlık',
+      ctaText: 'Tıkla',
+      ctaLink: '/iletisim',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('https URL ctaLink içeren HERO içeriğini kabul eder', () => {
+    const result = validateSectionContent('HERO', {
+      title: 'Başlık',
+      subtitle: 'Alt başlık',
+      ctaText: 'Tıkla',
+      ctaLink: 'https://example.com',
+    })
+    expect(result.success).toBe(true)
+  })
+
   it('geçerli SERVICES içeriğini kabul eder', () => {
     const result = validateSectionContent('SERVICES', {
       title: 'Hizmetler',

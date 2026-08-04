@@ -12,11 +12,24 @@ const safeUrl = z.string().url().refine(
   { message: 'Sadece http/https URL kabul edilir' }
 )
 
+const safeCtaLink = z.string().min(1).refine(
+  (v) => {
+    if (v.startsWith('#') || v.startsWith('/')) return true
+    try {
+      const protocol = new URL(v).protocol
+      return protocol === 'http:' || protocol === 'https:'
+    } catch {
+      return false
+    }
+  },
+  { message: 'Sadece http/https URL, / ile başlayan yol veya # ile başlayan anchor kabul edilir' }
+)
+
 export const heroContentSchema = z.object({
   title: z.string().min(1),
   subtitle: z.string().min(1),
   ctaText: z.string().min(1),
-  ctaLink: z.string().min(1),
+  ctaLink: safeCtaLink,
 })
 
 export const serviceItemSchema = z.object({

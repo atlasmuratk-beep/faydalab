@@ -36,11 +36,16 @@ export default function SettingsPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaved(false)
-    await fetch('/api/admin/settings', {
+    const res = await fetch('/api/admin/settings', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(settings),
     })
+    if (!res.ok) {
+      const body = await res.json()
+      alert(body.error === 'invalid_body' ? 'Bazı alanlar eksik veya geçersiz (Site Başlığı ve Meta Açıklama zorunlu).' : (body.error ?? 'Kaydetme başarısız'))
+      return
+    }
     setSaved(true)
   }
 

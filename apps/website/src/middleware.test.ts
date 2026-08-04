@@ -1,0 +1,38 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { NextRequest } from 'next/server'
+
+vi.mock('@/lib/session', () => ({
+  verifySession: vi.fn(),
+  SESSION_COOKIE: 'faydalab_admin_session',
+}))
+
+import { middleware } from './middleware'
+import { verifySession } from '@/lib/session'
+
+describe('middleware', () => {
+  beforeEach(() => {
+    vi.mocked(verifySession).mockReset()
+  })
+
+  it('geçerli session ile /admin isteğini geçirir', () => {
+    vi.mocked(verifySession).mockReturnValue('user-1')
+    const req = new NextRequest('http://localhost/admin/sections')
+    const res = middleware(req)
+    expect(res.status).toBe(200)
+  })
+
+  it('geçersiz session ile /admin isteğini login sayfasına yönlendirir', () => {
+    vi.mocked(verifySession).mockReturnValue(null)
+    const req = new NextRequest('http://localhost/admin/sections')
+    const res = middleware(req)
+    expect(res.status).toBe(307)
+    expect(res.headers.get('location')).toContain('/admin/login')
+  })
+
+  it('geçersiz session ile /api/admin isteğine 401 döner', () => {
+    vi.mocked(verifySession).mockReturnValue(null)
+    const req = new NextRequest('http://localhost/api/admin/sections')
+    const res = middleware(req)
+    expect(res.status).toBe(401)
+  })
+})

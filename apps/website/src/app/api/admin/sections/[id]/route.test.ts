@@ -28,14 +28,14 @@ describe('PATCH /api/admin/sections/[id]', () => {
 
   it('içerik güncellemesinde bulunamayan section için 404 döner', async () => {
     mocks.findUnique.mockResolvedValue(null)
-    const response = await PATCH(makePatchRequest({ content: { title: 't' } }), { params: { id: 'sec-1' } })
+    const response = await PATCH(makePatchRequest({ content: { title: 't' } }), { params: Promise.resolve({ id: 'sec-1' }) })
     expect(response.status).toBe(404)
   })
 
   it('geçersiz içerik güncellemesinde 400 döner', async () => {
     mocks.findUnique.mockResolvedValue({ id: 'sec-1', type: 'CONTACT' })
     const response = await PATCH(makePatchRequest({ content: { title: 'sadece başlık' } }), {
-      params: { id: 'sec-1' },
+      params: Promise.resolve({ id: 'sec-1' }),
     })
     expect(response.status).toBe(400)
     expect(mocks.update).not.toHaveBeenCalled()
@@ -46,7 +46,7 @@ describe('PATCH /api/admin/sections/[id]', () => {
     mocks.update.mockResolvedValue({ id: 'sec-1' })
     const response = await PATCH(
       makePatchRequest({ content: { title: 'Başlık', subtitle: 'Alt' } }),
-      { params: { id: 'sec-1' } }
+      { params: Promise.resolve({ id: 'sec-1' }) }
     )
     expect(response.status).toBe(200)
     expect(mocks.update).toHaveBeenCalledWith(
@@ -56,7 +56,7 @@ describe('PATCH /api/admin/sections/[id]', () => {
 
   it('sadece visible güncellemesi içerik doğrulaması gerektirmez', async () => {
     mocks.update.mockResolvedValue({ id: 'sec-1' })
-    const response = await PATCH(makePatchRequest({ visible: false }), { params: { id: 'sec-1' } })
+    const response = await PATCH(makePatchRequest({ visible: false }), { params: Promise.resolve({ id: 'sec-1' }) })
     expect(response.status).toBe(200)
     expect(mocks.findUnique).not.toHaveBeenCalled()
     expect(mocks.update).toHaveBeenCalledWith({ where: { id: 'sec-1' }, data: { visible: false } })
@@ -67,7 +67,7 @@ describe('DELETE /api/admin/sections/[id]', () => {
   it('section siler', async () => {
     mocks.delete.mockResolvedValue({ id: 'sec-1' })
     const response = await DELETE(new Request('http://localhost/api/admin/sections/sec-1', { method: 'DELETE' }), {
-      params: { id: 'sec-1' },
+      params: Promise.resolve({ id: 'sec-1' }),
     })
     expect(response.status).toBe(200)
     expect(mocks.delete).toHaveBeenCalledWith({ where: { id: 'sec-1' } })

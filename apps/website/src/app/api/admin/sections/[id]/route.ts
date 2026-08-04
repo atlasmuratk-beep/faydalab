@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { validateSectionContent, type SectionType } from '@/lib/sections'
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
   const body = await req.json()
-  const updateData: { content?: unknown; visible?: boolean } = {}
+  const updateData: { content?: Prisma.InputJsonValue; visible?: boolean } = {}
 
   if (body.content !== undefined) {
-    const existing = await prisma.section.findUnique({ where: { id: params.id } })
+    const existing = await prisma.section.findUnique({ where: { id } })
     if (!existing) {
       return NextResponse.json({ error: 'Section bulunamadı' }, { status: 404 })
     }
@@ -21,11 +26,29 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     updateData.visible = Boolean(body.visible)
   }
 
-  const section = await prisma.section.update({ where: { id: params.id }, data: updateData })
-  return NextResponse.json(section)
+  try {
+    const section = await prisma.section.update({ where: { id }, data: updateData })
+    return NextResponse.json(section)
+  } catch (error) {
+    if ((error as { code?: string }).code === 'P2025') {
+      return NextResponse.json({ error: 'Section bulunamadı' }, { status: 404 })
+    }
+    throw error
+  }
 }
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  await prisma.section.delete({ where: { id: params.id } })
-  return NextResponse.json({ ok: true })
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  try {
+    await prisma.section.delete({ where: { id } })
+    return NextResponse.json({ ok: true })
+  } catch (error) {
+    if ((error as { code?: string }).code === 'P2025') {
+      return NextResponse.json({ error: 'Section bulunamadı' }, { status: 404 })
+    }
+    throw error
+  }
 }

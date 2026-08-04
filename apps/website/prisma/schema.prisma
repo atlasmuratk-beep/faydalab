@@ -1,0 +1,11 @@
+// This schema will be populated in later tasks.
+// Task 1 only sets up the project skeleton.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}

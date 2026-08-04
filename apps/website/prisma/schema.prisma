@@ -1,6 +1,3 @@
-// This schema will be populated in later tasks.
-// Task 1 only sets up the project skeleton.
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,4 +5,49 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum SectionType {
+  HERO
+  SERVICES
+  CASE_STUDY
+  TEXT_BLOCK
+  CONTACT
+}
+
+model Section {
+  id        String      @id @default(cuid())
+  type      SectionType
+  order     Int
+  visible   Boolean     @default(true)
+  content   Json
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([order])
+}
+
+model SiteSettings {
+  id              Int      @id @default(1)
+  siteTitle       String
+  metaDescription String
+  faviconUrl      String?
+  logoUrl         String?
+  instagramUrl    String?
+  contactEmail    String?
+  updatedAt       DateTime @updatedAt
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model AdminUser {
+  id           String @id @default(cuid())
+  username     String @unique
+  passwordHash String
 }

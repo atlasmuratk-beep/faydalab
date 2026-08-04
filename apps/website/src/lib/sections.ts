@@ -1,5 +1,17 @@
 import { z } from 'zod'
 
+const safeUrl = z.string().url().refine(
+  (u) => {
+    try {
+      const protocol = new URL(u).protocol
+      return protocol === 'http:' || protocol === 'https:'
+    } catch {
+      return false
+    }
+  },
+  { message: 'Sadece http/https URL kabul edilir' }
+)
+
 export const heroContentSchema = z.object({
   title: z.string().min(1),
   subtitle: z.string().min(1),
@@ -23,8 +35,8 @@ export const caseStudyContentSchema = z.object({
   needText: z.string().min(1),
   solutionText: z.string().min(1),
   resultText: z.string().min(1),
-  imageUrl: z.string().url(),
-  liveUrl: z.string().url(),
+  imageUrl: safeUrl,
+  liveUrl: safeUrl,
 })
 
 export const textBlockContentSchema = z.object({

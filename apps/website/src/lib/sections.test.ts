@@ -54,6 +54,30 @@ describe('validateSectionContent', () => {
     expect(result.success).toBe(false)
   })
 
+  it('javascript: şemalı liveUrl içeren CASE_STUDY içeriğini reddeder', () => {
+    const result = validateSectionContent('CASE_STUDY', {
+      projectName: 'Proje',
+      needText: 'ihtiyaç',
+      solutionText: 'çözüm',
+      resultText: 'sonuç',
+      imageUrl: 'https://example.com/img.jpg',
+      liveUrl: 'javascript:alert(1)',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('data: şemalı imageUrl içeren CASE_STUDY içeriğini reddeder', () => {
+    const result = validateSectionContent('CASE_STUDY', {
+      projectName: 'Proje',
+      needText: 'ihtiyaç',
+      solutionText: 'çözüm',
+      resultText: 'sonuç',
+      imageUrl: 'data:text/html,<script>alert(1)</script>',
+      liveUrl: 'https://example.com',
+    })
+    expect(result.success).toBe(false)
+  })
+
   it('geçerli TEXT_BLOCK içeriğini kabul eder', () => {
     const result = validateSectionContent('TEXT_BLOCK', { title: 'Başlık', bodyMarkdown: 'metin' })
     expect(result.success).toBe(true)

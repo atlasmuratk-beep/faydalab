@@ -22,14 +22,16 @@ export function CaseStudySection({ content }: { content: CaseStudyContent }) {
             <span className="font-subheading text-brand-gold">Sonuç: </span>
             {content.resultText}
           </p>
-          <a
-            href={content.liveUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-subheading text-brand-gold underline"
-          >
-            Canlı siteyi görüntüle →
-          </a>
+          {(content.liveUrl.startsWith('http://') || content.liveUrl.startsWith('https://')) && (
+            <a
+              href={content.liveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-subheading text-brand-gold underline"
+            >
+              Canlı siteyi görüntüle →
+            </a>
+          )}
         </div>
       </div>
     </section>

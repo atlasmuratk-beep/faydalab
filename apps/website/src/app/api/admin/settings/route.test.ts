@@ -39,4 +39,25 @@ describe('PATCH /api/admin/settings', () => {
       expect.objectContaining({ where: { id: 1 } })
     )
   })
+
+  it('siteTitle eksikse 400 döner', async () => {
+    const req = new Request('http://localhost/api/admin/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ metaDescription: 'açıklama' }),
+    })
+    const response = await PATCH(req)
+    expect(response.status).toBe(400)
+    expect(mocks.upsert).not.toHaveBeenCalled()
+  })
+
+  it('metaDescription boş string ise 400 döner', async () => {
+    const req = new Request('http://localhost/api/admin/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ siteTitle: 'Başlık', metaDescription: '' }),
+    })
+    const response = await PATCH(req)
+    expect(response.status).toBe(400)
+  })
 })

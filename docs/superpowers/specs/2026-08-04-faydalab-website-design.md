@@ -163,7 +163,12 @@ Panel ekranları:
 Site ilk yayınlandığında boş olmayacak — aşağıdaki section'lar seed script ile oluşturulur, kullanıcı panelden düzenler:
 
 1. HERO — marka konumlandırma cümlesi ("Teknolojiyi ve yapay zekayı anlaşılır, uygulanabilir ve güvenilir kılan teknoloji otorite markası")
-2. SERVICES — mevcut fiilen sunulan hizmetler (Instagram içerik otomasyonu, web sitesi/QR menü)
+2. SERVICES — sadece iki kalemle sınırlı değil, ajansın fiilen yaptığı/yapabileceği işlerin genel bir kesiti (somut müşteri adı gerektirmeyen, "yapabildiklerimiz" niteliğinde yetenek kartları — vaka çalışması değildir, ayrı ele alınır). Kapsayacağı örnekler:
+   - Instagram/sosyal medya içerik otomasyonu
+   - Web sitesi / QR menü (adisyon/sipariş sistemleri dahil, örn. dergi-QR adisyon programı)
+   - Kişiselleştirilmiş çoklu belge oluşturma ve gönderim sistemleri (eğitim/sertifika/katılım belgesi veren kurumlar için)
+   - Yapay zeka destekli online davetiye ve benzeri kişiselleştirilmiş dijital ürünler
+   Tam liste implementasyon sırasında yazılır; yukarıdakiler kapsamı göstermek için örnek, kısıtlayıcı değil — panelden istenildiği kadar kalem eklenip çıkarılabilir (SERVICES section'ın `items` alanı zaten serbest uzunlukta bir liste).
 3. CASE_STUDY × 3 — gazi-usta, Gelecek Rehberlik, Atlas Murat Koçer için "İhtiyaç → Çözüm → Sonuç" taslak metinleri (implementasyon sırasında mevcut kod tabanları/canlı sitelerden yola çıkarak yazılır, marka sesi ilkelerine uygun — abartısız, somut)
 4. TEXT_BLOCK — kısa "Hakkımızda"
 5. CONTACT — iletişim bölümü

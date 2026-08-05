@@ -7,6 +7,9 @@ export function middleware(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE)?.value
   const userId = verifySession(token)
   if (!userId) {
+    if (req.nextUrl.pathname === '/admin/login') {
+      return NextResponse.next()
+    }
     if (req.nextUrl.pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
     }

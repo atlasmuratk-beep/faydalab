@@ -3,14 +3,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const mocks = vi.hoisted(() => ({
   findUnique: vi.fn(),
   compare: vi.fn(),
-  signSession: vi.fn(),
-  isRateLimited: vi.fn(),
 }))
 
 vi.mock('@/lib/db', () => ({ prisma: { adminUser: { findUnique: mocks.findUnique } } }))
 vi.mock('bcryptjs', () => ({ default: { compare: mocks.compare } }))
-vi.mock('@/lib/session', () => ({ signSession: mocks.signSession, SESSION_COOKIE: 'faydalab_crm_session' }))
-vi.mock('@/lib/rate-limit', () => ({ isRateLimited: mocks.isRateLimited }))
 
 import { POST } from './route'
 
@@ -26,10 +22,6 @@ describe('POST /api/auth/login', () => {
   beforeEach(() => {
     mocks.findUnique.mockReset()
     mocks.compare.mockReset()
-    mocks.signSession.mockReset()
-    mocks.isRateLimited.mockReset()
-    mocks.isRateLimited.mockReturnValue(false)
-    mocks.signSession.mockReturnValue('signed-token')
     process.env.ADMIN_SESSION_SECRET = 'test-secret'
   })
 
@@ -57,5 +49,16 @@ describe('POST /api/auth/login', () => {
     const response = await POST(makeRequest({ username: 'admin', password: 'correct' }))
     expect(response.status).toBe(200)
     expect(response.headers.get('set-cookie')).toContain('faydalab_crm_session=')
+  })
+
+  it('aynı IP dakikada 10 denemeden fazla yaparsa 429 döner', async () => {
+    mocks.findUnique.mockResolvedValue(null)
+    const ip = 'login-rate-limit-ip'
+    for (let i = 0; i < 10; i++) {
+      const response = await POST(makeRequest({ username: 'admin', password: 'wrong' }, ip))
+      expect(response.status).toBe(401)
+    }
+    const eleventh = await POST(makeRequest({ username: 'admin', password: 'wrong' }, ip))
+    expect(eleventh.status).toBe(429)
   })
 })

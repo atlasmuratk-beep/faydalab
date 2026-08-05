@@ -33,12 +33,18 @@ export default async function HomePage() {
     return result.success
   })
 
+  const caseStudyCount = validSections.filter((s) => s.type === 'CASE_STUDY').length
+  const servicesSection = validSections.find((s) => s.type === 'SERVICES')
+  const serviceCount = servicesSection
+    ? ((servicesSection.content as { items?: unknown[] }).items?.length ?? 0)
+    : 0
+
   return (
     <>
       <Header />
       <main>
         {validSections.map((section) => (
-          <SectionRenderer key={section.id} section={section} />
+          <SectionRenderer key={section.id} section={section} stats={{ caseStudyCount, serviceCount }} />
         ))}
       </main>
       <Footer instagramUrl={settings?.instagramUrl ?? null} />

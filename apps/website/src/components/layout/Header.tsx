@@ -21,7 +21,10 @@ export function Header() {
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6">
-        <a href="#" className="font-heading text-2xl uppercase tracking-wide text-brand-text">
+        <a href="#" className="flex items-center gap-2.5 font-heading text-2xl uppercase tracking-wide text-brand-text">
+          <span className="flex h-8 w-8 items-center justify-center rounded-md border border-brand-gold/40 bg-brand-gold/10 text-sm text-brand-gold">
+            F
+          </span>
           FaydaLab
         </a>
         <nav className="flex items-center gap-6 font-subheading text-sm text-brand-muted">

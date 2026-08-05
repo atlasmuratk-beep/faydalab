@@ -1,20 +1,34 @@
 import Image from 'next/image'
 import type { CaseStudyContent } from '@/lib/sections'
 import { Reveal } from '@/components/motion/Reveal'
+import { BrowserFrame } from '@/components/motion/BrowserFrame'
+
+function displayUrl(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return undefined
+  }
+}
 
 export function CaseStudySection({ content }: { content: CaseStudyContent }) {
+  const isSafeLiveUrl = content.liveUrl.startsWith('http://') || content.liveUrl.startsWith('https://')
+
   return (
-    <section className="border-t border-brand-border px-6 py-20">
-      <div className="mx-auto grid max-w-5xl items-center gap-10 md:grid-cols-2">
+    <section className="border-t border-brand-border px-6 py-24">
+      <div className="mx-auto grid max-w-5xl items-center gap-12 md:grid-cols-2">
         <Reveal y={32}>
-          <div className="group relative aspect-video overflow-hidden rounded-xl border border-brand-border shadow-[0_20px_50px_-20px_rgba(0,0,0,0.8)]">
-            <Image
-              src={content.imageUrl}
-              alt={content.projectName}
-              fill
-              className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-            />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+          <div className="group">
+            <BrowserFrame url={isSafeLiveUrl ? displayUrl(content.liveUrl) : undefined}>
+              <div className="relative aspect-video overflow-hidden">
+                <Image
+                  src={content.imageUrl}
+                  alt={content.projectName}
+                  fill
+                  className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
+                />
+              </div>
+            </BrowserFrame>
           </div>
         </Reveal>
         <Reveal delay={0.1}>
@@ -36,7 +50,7 @@ export function CaseStudySection({ content }: { content: CaseStudyContent }) {
               {content.resultText}
             </p>
           </div>
-          {(content.liveUrl.startsWith('http://') || content.liveUrl.startsWith('https://')) && (
+          {isSafeLiveUrl && (
             <a
               href={content.liveUrl}
               target="_blank"

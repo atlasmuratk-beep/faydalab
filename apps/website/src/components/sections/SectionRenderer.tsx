@@ -12,10 +12,16 @@ import type {
   ContactContent,
 } from '@/lib/sections'
 
-export function SectionRenderer({ section }: { section: Section }) {
+export function SectionRenderer({
+  section,
+  stats,
+}: {
+  section: Section
+  stats: { caseStudyCount: number; serviceCount: number }
+}) {
   switch (section.type) {
     case 'HERO':
-      return <HeroSection content={section.content as unknown as HeroContent} />
+      return <HeroSection content={section.content as unknown as HeroContent} stats={stats} />
     case 'SERVICES':
       return <ServicesSection content={section.content as unknown as ServicesContent} />
     case 'CASE_STUDY':

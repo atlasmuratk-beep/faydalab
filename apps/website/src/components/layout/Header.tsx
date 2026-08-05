@@ -1,7 +1,26 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+
 export function Header() {
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   return (
-    <header className="sticky top-0 z-50 border-b border-brand-border/60 bg-brand-bg/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+    <header
+      className={`sticky top-0 z-50 border-b backdrop-blur-md transition-all duration-300 ${
+        scrolled
+          ? 'border-brand-border/60 bg-brand-bg/90 py-3 shadow-[0_8px_30px_-20px_rgba(0,0,0,0.8)]'
+          : 'border-transparent bg-brand-bg/40 py-5'
+      }`}
+    >
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6">
         <a href="#" className="font-heading text-2xl uppercase tracking-wide text-brand-text">
           FaydaLab
         </a>
@@ -14,7 +33,7 @@ export function Header() {
           </a>
           <a
             href="#iletisim"
-            className="rounded-full bg-brand-gold px-4 py-2 font-semibold text-brand-bg transition hover:opacity-90"
+            className="rounded-full bg-brand-gold px-4 py-2 font-semibold text-brand-bg transition hover:-translate-y-0.5 hover:opacity-90"
           >
             İletişime Geç
           </a>

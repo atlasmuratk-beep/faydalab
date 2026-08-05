@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import type { ContactContent } from '@/lib/sections'
+import { Reveal } from '@/components/motion/Reveal'
 
 export function ContactSection({ content }: { content: ContactContent }) {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
@@ -32,30 +34,37 @@ export function ContactSection({ content }: { content: ContactContent }) {
     'rounded-lg border border-brand-border bg-brand-surface p-3 text-brand-text placeholder:text-brand-muted/60 outline-none transition focus:border-brand-gold/60 focus:ring-2 focus:ring-brand-gold/20'
 
   return (
-    <section id="iletisim" className="scroll-mt-20 border-t border-brand-border px-6 py-24">
-      <div className="mx-auto max-w-xl text-center">
+    <section id="iletisim" className="scroll-mt-20 border-t border-brand-border px-6 py-28">
+      <Reveal className="mx-auto max-w-xl text-center">
+        <p className="mb-3 font-subheading text-xs uppercase tracking-[0.3em] text-brand-gold">İletişim</p>
         <h2 className="mb-2 font-heading text-4xl uppercase text-brand-text">{content.title}</h2>
         <p className="mb-8 text-brand-muted">{content.subtitle}</p>
         {status === 'sent' ? (
-          <p className="rounded-lg border border-brand-gold/30 bg-brand-gold/5 p-4 text-brand-gold">
+          <motion.p
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-lg border border-brand-gold/30 bg-brand-gold/5 p-4 text-brand-gold"
+          >
             Mesajınız alındı, en kısa sürede dönüş yapacağız.
-          </p>
+          </motion.p>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
             <input name="name" placeholder="İsim" required className={inputClass} />
             <input name="email" type="email" placeholder="E-posta" required className={inputClass} />
             <textarea name="message" placeholder="Mesajınız" required rows={4} className={inputClass} />
             {status === 'error' && <p className="text-sm text-red-400">Gönderim başarısız, lütfen tekrar deneyin.</p>}
-            <button
+            <motion.button
               type="submit"
               disabled={status === 'sending'}
-              className="rounded-full bg-brand-gold px-8 py-3 font-subheading font-semibold text-brand-bg shadow-[0_0_40px_-8px_rgba(212,175,55,0.6)] transition hover:-translate-y-0.5 hover:opacity-90 disabled:translate-y-0 disabled:opacity-50"
+              whileHover={{ y: -3, scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              className="rounded-full bg-brand-gold px-8 py-3 font-subheading font-semibold text-brand-bg shadow-[0_0_40px_-8px_rgba(212,175,55,0.6)] transition-shadow hover:shadow-[0_0_55px_-8px_rgba(212,175,55,0.8)] disabled:opacity-50"
             >
               {status === 'sending' ? 'Gönderiliyor...' : 'Gönder'}
-            </button>
+            </motion.button>
           </form>
         )}
-      </div>
+      </Reveal>
     </section>
   )
 }

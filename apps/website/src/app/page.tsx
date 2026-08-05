@@ -4,6 +4,7 @@ import { validateSectionContent, type SectionType } from '@/lib/sections'
 import { SectionRenderer } from '@/components/sections/SectionRenderer'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { CustomCursor } from '@/components/motion/CustomCursor'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,7 +34,11 @@ export default async function HomePage() {
     return result.success
   })
 
-  const caseStudyCount = validSections.filter((s) => s.type === 'CASE_STUDY').length
+  const caseStudySections = validSections.filter((s) => s.type === 'CASE_STUDY')
+  const caseStudyCount = caseStudySections.length
+  const caseStudyNames = caseStudySections.map(
+    (s) => (s.content as { projectName?: string }).projectName ?? ''
+  )
   const servicesSection = validSections.find((s) => s.type === 'SERVICES')
   const serviceCount = servicesSection
     ? ((servicesSection.content as { items?: unknown[] }).items?.length ?? 0)
@@ -41,10 +46,15 @@ export default async function HomePage() {
 
   return (
     <>
+      <CustomCursor />
       <Header />
       <main>
         {validSections.map((section) => (
-          <SectionRenderer key={section.id} section={section} stats={{ caseStudyCount, serviceCount }} />
+          <SectionRenderer
+            key={section.id}
+            section={section}
+            stats={{ caseStudyCount, serviceCount, caseStudyNames }}
+          />
         ))}
       </main>
       <Footer instagramUrl={settings?.instagramUrl ?? null} />

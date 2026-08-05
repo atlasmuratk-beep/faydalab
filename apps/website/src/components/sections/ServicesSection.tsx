@@ -7,7 +7,10 @@ export function ServicesSection({ content }: { content: ServicesContent }) {
       <div className="mx-auto max-w-5xl">
         <Reveal className="mb-16 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <p className="mb-3 font-subheading text-xs uppercase tracking-[0.3em] text-brand-gold">Hizmetler</p>
+            <div className="mb-4 flex items-center gap-3">
+              <span className="h-px w-8 bg-brand-gold" />
+              <span className="font-subheading text-xs uppercase tracking-[0.3em] text-brand-muted">Hizmetler</span>
+            </div>
             <h2 className="max-w-lg font-heading text-4xl uppercase leading-tight text-brand-text md:text-5xl">
               {content.title}
             </h2>

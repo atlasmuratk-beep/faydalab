@@ -17,7 +17,7 @@ export function SectionRenderer({
   stats,
 }: {
   section: Section
-  stats: { caseStudyCount: number; serviceCount: number }
+  stats: { caseStudyCount: number; serviceCount: number; caseStudyNames: string[] }
 }) {
   switch (section.type) {
     case 'HERO':

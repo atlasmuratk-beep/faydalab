@@ -32,9 +32,10 @@ export function CaseStudySection({ content }: { content: CaseStudyContent }) {
           </div>
         </Reveal>
         <Reveal delay={0.1}>
-          <span className="mb-3 inline-block rounded-full border border-brand-gold/30 bg-brand-gold/5 px-3 py-1 font-subheading text-xs uppercase tracking-[0.2em] text-brand-gold">
-            Vaka Çalışması
-          </span>
+          <div className="mb-4 flex items-center gap-3">
+            <span className="h-px w-8 bg-brand-gold" />
+            <span className="font-subheading text-xs uppercase tracking-[0.3em] text-brand-muted">Vaka Çalışması</span>
+          </div>
           <h3 className="mb-5 font-heading text-3xl uppercase text-brand-text">{content.projectName}</h3>
           <div className="flex flex-col gap-3 border-l-2 border-brand-gold/40 pl-4">
             <p className="text-brand-muted">

@@ -37,7 +37,10 @@ export function ContactSection({ content }: { content: ContactContent }) {
     <section id="iletisim" className="scroll-mt-20 border-t border-brand-border px-6 py-28">
       <div className="mx-auto grid max-w-5xl gap-14 md:grid-cols-2 md:items-center">
         <Reveal>
-          <p className="mb-3 font-subheading text-xs uppercase tracking-[0.3em] text-brand-gold">İletişim</p>
+          <div className="mb-4 flex items-center gap-3">
+            <span className="h-px w-8 bg-brand-gold" />
+            <span className="font-subheading text-xs uppercase tracking-[0.3em] text-brand-muted">İletişim</span>
+          </div>
           <h2 className="mb-4 font-heading text-4xl uppercase leading-tight text-brand-text md:text-5xl">
             {content.title}
           </h2>
@@ -63,7 +66,7 @@ export function ContactSection({ content }: { content: ContactContent }) {
                 disabled={status === 'sending'}
                 whileHover={{ y: -3, scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
-                className="rounded-full bg-brand-gold px-8 py-3 font-subheading font-semibold text-brand-bg shadow-[0_0_40px_-8px_rgba(212,175,55,0.6)] transition-shadow hover:shadow-[0_0_55px_-8px_rgba(212,175,55,0.8)] disabled:opacity-50"
+                className="rounded-full bg-brand-gold px-8 py-3 font-subheading font-semibold text-brand-bg transition-shadow hover:shadow-[0_8px_30px_-10px_rgba(212,175,55,0.5)] disabled:opacity-50"
               >
                 {status === 'sending' ? 'Gönderiliyor...' : 'Gönder'}
               </motion.button>

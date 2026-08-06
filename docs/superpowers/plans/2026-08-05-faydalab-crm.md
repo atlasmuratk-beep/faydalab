@@ -2034,9 +2034,9 @@ git commit -m "apps/website: iletişim formu lead'lerini CRM'e best-effort ilet"
 
 Bu adımlar gerçek kimlik bilgileri/altyapı gerektirdiği için subagent'lara değil, controller'a (insan onaylı oturum) aittir — website projesinde de aynı desen izlendi:
 
-1. Vercel'de yeni `crm` projesi oluştur (`apps/crm` root directory), Neon Postgres + gerekli env var'ları bağla (`DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`, `ANTHROPIC_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `VAPI_WEBHOOK_SECRET`).
-2. `prisma migrate dev` ile ilk migration'ı gerçek DB'ye karşı oluştur ve uygula, `db:seed` ile ilk `AdminUser`'ı oluştur.
-3. `apps/website`'in Vercel env var'larına `CRM_API_URL` ekle (CRM'in canlı URL'i).
+1. Vercel'de yeni `crm` projesi oluştur (`apps/crm` root directory), Neon Postgres + gerekli env var'ları bağla (`DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`, `ANTHROPIC_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `VAPI_WEBHOOK_SECRET`, `CRM_INGEST_SECRET`).
+2. `prisma migrate dev` ile ilk migration'ı gerçek DB'ye karşı oluştur ve uygula, `db:seed` ile ilk `AdminUser`'ı oluştur. Oluşan `apps/crm/prisma/migrations/` klasörünü commit'le — Vercel build'i migration'ları bu klasör olmadan uygulayamaz.
+3. `apps/website`'in Vercel env var'larına `CRM_API_URL` ve `CRM_INGEST_SECRET` (Adım 1'de üretilenle aynı değer) ekle.
 4. Telegram bot token'ını BotFather üzerinden yenile (rotate); yeni token'ı hem `apps/crm` hem gerekiyorsa diğer paylaşan projelerin env'ine yaz.
 5. Yeni bir `VAPI_WEBHOOK_SECRET` üret, `apps/crm` env'ine yaz; `vapi-telesekreter/assistant.json`'daki `server.url`'i `https://<crm-domain>/api/webhooks/vapi?token=<yeni-secret>` olarak güncelle (ayrı repo, bu depo dışı bir işlem).
 6. Canlıda uçtan uca doğrula: web sitesinden bir test mesajı gönder → CRM'de lead görünüyor mu, Telegram bildirimi geldi mi kontrol et.

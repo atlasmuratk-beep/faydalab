@@ -761,10 +761,10 @@ const TENANT = { id: 'tenant-1', ingestSecret: VALID_SECRET }
 
 function makeRequest(
   body: unknown,
-  { ip = 'test-ip', secret = VALID_SECRET }: { ip?: string; secret?: string | undefined } = {}
+  { ip = 'test-ip', secret = VALID_SECRET }: { ip?: string; secret?: string | null } = {}
 ): Request {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', 'x-forwarded-for': ip }
-  if (secret !== undefined) headers['x-crm-ingest-secret'] = secret
+  if (secret !== null) headers['x-crm-ingest-secret'] = secret
   return new Request('http://localhost/api/leads', {
     method: 'POST',
     headers,
@@ -783,7 +783,7 @@ describe('POST /api/leads', () => {
   })
 
   it('secret header eksikse 403 döner', async () => {
-    const response = await POST(makeRequest({ name: 'Ali' }, { secret: undefined }))
+    const response = await POST(makeRequest({ name: 'Ali' }, { secret: null }))
     expect(response.status).toBe(403)
     expect(mocks.createLead).not.toHaveBeenCalled()
   })

@@ -5,7 +5,10 @@ const mocks = vi.hoisted(() => ({
   runQualification: vi.fn(),
 }))
 
-vi.mock('@/lib/leads', () => ({ createLead: mocks.createLead, runQualification: mocks.runQualification }))
+vi.mock('@/lib/leads', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/leads')>('@/lib/leads')
+  return { ...actual, createLead: mocks.createLead, runQualification: mocks.runQualification }
+})
 vi.mock('next/server', async () => {
   const actual = await vi.importActual<typeof import('next/server')>('next/server')
   return { ...actual, after: (fn: () => unknown) => fn() }
@@ -31,6 +34,18 @@ describe('POST /api/webhooks/vapi', () => {
   it('yanlış token ile 403 döner', async () => {
     const response = await POST(makeRequest({}, 'wrong-secret'))
     expect(response.status).toBe(403)
+    expect(mocks.createLead).not.toHaveBeenCalled()
+  })
+
+  it('bozuk JSON gövdesi için 400 döner', async () => {
+    const response = await POST(
+      new Request('http://localhost/api/webhooks/vapi?token=correct-secret', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{invalid-json',
+      })
+    )
+    expect(response.status).toBe(400)
     expect(mocks.createLead).not.toHaveBeenCalled()
   })
 

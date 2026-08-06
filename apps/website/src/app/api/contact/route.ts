@@ -17,9 +17,12 @@ async function forwardToCrm(data: { name: string; email: string; message: string
   if (!crmUrl) return
 
   try {
-    await fetch(`${crmUrl}/api/leads`, {
+    const res = await fetch(`${crmUrl}/api/leads`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-crm-ingest-secret': process.env.CRM_INGEST_SECRET ?? '',
+      },
       body: JSON.stringify({
         name: data.name,
         email: data.email,
@@ -27,7 +30,9 @@ async function forwardToCrm(data: { name: string; email: string; message: string
         source: 'WEBSITE',
         sourceMeta: { email: data.email },
       }),
+      signal: AbortSignal.timeout(3000),
     })
+    if (!res.ok) console.error('CRM lead iletimi reddedildi:', res.status)
   } catch (error) {
     console.error('CRM lead iletimi başarısız:', error)
   }

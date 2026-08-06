@@ -31,10 +31,12 @@ export default async function LeadsPage({
   }
 
   const { status, source } = await searchParams
+  const validStatus = status && status in STATUS_LABELS ? (status as LeadStatus) : undefined
+  const validSource = source === 'WEBSITE' || source === 'VAPI' ? (source as LeadSource) : undefined
   const leads = await prisma.lead.findMany({
     where: {
-      status: status ? (status as LeadStatus) : undefined,
-      source: source ? (source as LeadSource) : undefined,
+      status: validStatus,
+      source: validSource,
     },
     orderBy: { createdAt: 'desc' },
   })

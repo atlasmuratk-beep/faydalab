@@ -1,5 +1,5 @@
 import { NextResponse, after } from 'next/server'
-import { createLead, runQualification } from '@/lib/leads'
+import { createLeadSchema, createLead, runQualification } from '@/lib/leads'
 
 interface VapiEndOfCallBody {
   message?: {
@@ -19,7 +19,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const body = (await req.json()) as VapiEndOfCallBody
+  let body: VapiEndOfCallBody
+  try {
+    body = (await req.json()) as VapiEndOfCallBody
+  } catch {
+    return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
+  }
   const message = body.message
 
   if (message?.type !== 'end-of-call-report') {
@@ -32,13 +37,18 @@ export async function POST(req: Request) {
   const phone = structured.phone ?? callerNumber
   const requestText = structured.request ?? message.analysis?.summary ?? 'Belirtilmedi'
 
-  const lead = await createLead({
+  const parsed = createLeadSchema.safeParse({
     name,
     phone,
     requestText,
     source: 'VAPI',
     sourceMeta: body as unknown,
   })
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'invalid_lead_data', details: parsed.error.flatten() }, { status: 400 })
+  }
+
+  const lead = await createLead(parsed.data)
   after(() => runQualification(lead.id))
 
   return NextResponse.json({ id: lead.id }, { status: 201 })

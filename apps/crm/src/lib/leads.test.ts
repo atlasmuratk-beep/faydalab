@@ -37,6 +37,19 @@ describe('createLeadSchema', () => {
     })
     expect(result.success).toBe(true)
   })
+
+  it('sourceMeta alanı verilmezse boş nesneye varsayılan olur', () => {
+    const result = createLeadSchema.safeParse({
+      name: 'Ali',
+      phone: '5551234567',
+      requestText: 'Web sitesi istiyorum',
+      source: 'VAPI',
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.sourceMeta).toEqual({})
+    }
+  })
 })
 
 describe('createLead', () => {

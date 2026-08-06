@@ -11,7 +11,7 @@ export const createLeadSchema = z
     email: z.string().email().optional(),
     requestText: z.string().min(1).max(5000),
     source: z.enum(['WEBSITE', 'VAPI']),
-    sourceMeta: z.unknown(),
+    sourceMeta: z.unknown().default({}),
   })
   .refine((data) => Boolean(data.phone) || Boolean(data.email), {
     message: 'phone veya email alanlarından en az biri gerekli',
@@ -55,7 +55,11 @@ export async function runQualification(leadId: string): Promise<void> {
     )
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
-    await prisma.lead.update({ where: { id: leadId }, data: { aiError: message } })
-    await sendAlert(`Yeni lead (${lead.source}): ${lead.name}\nAI değerlendirmesi başarısız: ${message}`)
+    try {
+      await prisma.lead.update({ where: { id: leadId }, data: { aiError: message } })
+      await sendAlert(`Yeni lead (${lead.source}): ${lead.name}\nAI değerlendirmesi başarısız: ${message}`)
+    } catch (secondaryError) {
+      console.error('runQualification hata işleme sırasında ikincil hata:', secondaryError)
+    }
   }
 }

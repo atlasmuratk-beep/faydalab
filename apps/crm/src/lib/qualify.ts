@@ -24,7 +24,7 @@ export type Qualification = z.infer<typeof qualificationSchema>
 export async function qualifyLead(requestText: string): Promise<Qualification> {
   const message = await anthropicClient().messages.create({
     model: 'claude-sonnet-5',
-    max_tokens: 512,
+    max_tokens: 1024,
     system:
       'Sen FaydaLab Digital ajansı için gelen müşteri taleplerini değerlendiren bir satış asistanısın. ' +
       'Talebi oku, kısa bir özet çıkar, hizmet kategorisini belirle (ör. "Web Sitesi", "QR Menü", ' +

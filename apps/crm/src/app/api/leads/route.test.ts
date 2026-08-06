@@ -3,12 +3,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const mocks = vi.hoisted(() => ({
   createLead: vi.fn(),
   runQualification: vi.fn(),
+  resolveTenantBySecret: vi.fn(),
 }))
 
 vi.mock('@/lib/leads', async () => {
   const actual = await vi.importActual<typeof import('@/lib/leads')>('@/lib/leads')
   return { ...actual, createLead: mocks.createLead, runQualification: mocks.runQualification }
 })
+vi.mock('@/lib/tenant-ingest', () => ({ resolveTenantBySecret: mocks.resolveTenantBySecret }))
 vi.mock('next/server', async () => {
   const actual = await vi.importActual<typeof import('next/server')>('next/server')
   return { ...actual, after: (fn: () => unknown) => fn() }
@@ -17,13 +19,14 @@ vi.mock('next/server', async () => {
 import { POST } from './route'
 
 const VALID_SECRET = 'correct-ingest-secret'
+const TENANT = { id: 'tenant-1', ingestSecret: VALID_SECRET }
 
 function makeRequest(
   body: unknown,
-  { ip = 'test-ip', secret = VALID_SECRET }: { ip?: string; secret?: string | undefined } = {}
+  { ip = 'test-ip', secret = VALID_SECRET }: { ip?: string; secret?: string | null } = {}
 ): Request {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', 'x-forwarded-for': ip }
-  if (secret !== undefined) headers['x-crm-ingest-secret'] = secret
+  if (secret !== null) headers['x-crm-ingest-secret'] = secret
   return new Request('http://localhost/api/leads', {
     method: 'POST',
     headers,
@@ -33,14 +36,16 @@ function makeRequest(
 
 describe('POST /api/leads', () => {
   beforeEach(() => {
-    mocks.createLead.mockReset()
+    mocks.createLead.mockReset().mockResolvedValue({ id: 'lead-1' })
     mocks.runQualification.mockReset().mockResolvedValue(undefined)
-    process.env.CRM_INGEST_SECRET = VALID_SECRET
+    mocks.resolveTenantBySecret.mockReset()
+    mocks.resolveTenantBySecret.mockImplementation(async (secret: string | null | undefined) =>
+      secret === VALID_SECRET ? TENANT : null
+    )
   })
 
-  it('CRM_INGEST_SECRET tanımlı değilse 403 döner', async () => {
-    delete process.env.CRM_INGEST_SECRET
-    const response = await POST(makeRequest({ name: 'Ali' }))
+  it('secret header eksikse 403 döner', async () => {
+    const response = await POST(makeRequest({ name: 'Ali', phone: '5551234567', requestText: 'test', source: 'WEBSITE', sourceMeta: {} }, { secret: null }))
     expect(response.status).toBe(403)
     expect(mocks.createLead).not.toHaveBeenCalled()
   })
@@ -87,6 +92,7 @@ describe('POST /api/leads', () => {
     expect(response.status).toBe(201)
     const json = await response.json()
     expect(json.id).toBe('lead-1')
+    expect(mocks.createLead).toHaveBeenCalledWith(expect.objectContaining({ name: 'Ali' }), 'tenant-1')
     expect(mocks.runQualification).toHaveBeenCalledWith('lead-1')
   })
 })

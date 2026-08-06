@@ -1,6 +1,6 @@
 import { NextResponse, after } from 'next/server'
 import { createLeadSchema, createLead, runQualification } from '@/lib/leads'
-import { secureCompare } from '@/lib/secure-compare'
+import { resolveTenantBySecret } from '@/lib/tenant-ingest'
 
 interface VapiEndOfCallBody {
   message?: {
@@ -17,9 +17,9 @@ export async function POST(req: Request) {
   const url = new URL(req.url)
   // Header tercih edilir (URL'ler sunucu erişim loglarında düz metin olarak kalabilir);
   // query param, Vapi'nin şu anki webhook yapılandırmasıyla geriye dönük uyumluluk için korunur.
-  const token = req.headers.get('x-vapi-webhook-secret') ?? url.searchParams.get('token')
-  const expected = process.env.VAPI_WEBHOOK_SECRET
-  if (!expected || !token || !secureCompare(token, expected)) {
+  const secret = req.headers.get('x-vapi-webhook-secret') ?? url.searchParams.get('token')
+  const tenant = await resolveTenantBySecret(secret)
+  if (!tenant) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'invalid_lead_data', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const lead = await createLead(parsed.data)
+  const lead = await createLead(parsed.data, tenant.id)
   after(() => runQualification(lead.id))
 
   return NextResponse.json({ id: lead.id }, { status: 201 })

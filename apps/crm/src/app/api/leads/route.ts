@@ -1,12 +1,12 @@
 import { NextResponse, after } from 'next/server'
 import { createLeadSchema, createLead, runQualification } from '@/lib/leads'
 import { isRateLimited } from '@/lib/rate-limit'
-import { secureCompare } from '@/lib/secure-compare'
+import { resolveTenantBySecret } from '@/lib/tenant-ingest'
 
 export async function POST(req: Request) {
   const secret = req.headers.get('x-crm-ingest-secret')
-  const expected = process.env.CRM_INGEST_SECRET
-  if (!expected || !secret || !secureCompare(secret, expected)) {
+  const tenant = await resolveTenantBySecret(secret)
+  if (!tenant) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const lead = await createLead(parsed.data)
+  const lead = await createLead(parsed.data, tenant.id)
   after(() => runQualification(lead.id))
 
   return NextResponse.json({ id: lead.id }, { status: 201 })

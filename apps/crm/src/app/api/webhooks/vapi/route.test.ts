@@ -3,12 +3,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const mocks = vi.hoisted(() => ({
   createLead: vi.fn(),
   runQualification: vi.fn(),
+  resolveTenantBySecret: vi.fn(),
 }))
 
 vi.mock('@/lib/leads', async () => {
   const actual = await vi.importActual<typeof import('@/lib/leads')>('@/lib/leads')
   return { ...actual, createLead: mocks.createLead, runQualification: mocks.runQualification }
 })
+vi.mock('@/lib/tenant-ingest', () => ({ resolveTenantBySecret: mocks.resolveTenantBySecret }))
 vi.mock('next/server', async () => {
   const actual = await vi.importActual<typeof import('next/server')>('next/server')
   return { ...actual, after: (fn: () => unknown) => fn() }
@@ -16,7 +18,10 @@ vi.mock('next/server', async () => {
 
 import { POST } from './route'
 
-function makeRequest(body: unknown, token = 'correct-secret'): Request {
+const VALID_SECRET = 'correct-secret'
+const TENANT = { id: 'tenant-1', ingestSecret: VALID_SECRET }
+
+function makeRequest(body: unknown, token = VALID_SECRET): Request {
   return new Request(`http://localhost/api/webhooks/vapi?token=${token}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -28,7 +33,10 @@ describe('POST /api/webhooks/vapi', () => {
   beforeEach(() => {
     mocks.createLead.mockReset()
     mocks.runQualification.mockReset().mockResolvedValue(undefined)
-    process.env.VAPI_WEBHOOK_SECRET = 'correct-secret'
+    mocks.resolveTenantBySecret.mockReset()
+    mocks.resolveTenantBySecret.mockImplementation(async (secret: string | null) =>
+      secret === VALID_SECRET ? TENANT : null
+    )
   })
 
   it('yanlış token ile 403 döner', async () => {
@@ -92,13 +100,16 @@ describe('POST /api/webhooks/vapi', () => {
       })
     )
     expect(response.status).toBe(201)
-    expect(mocks.createLead).toHaveBeenCalledWith({
-      name: 'Ayşe',
-      phone: '5551112233',
-      requestText: 'QR menü istiyor',
-      source: 'VAPI',
-      sourceMeta: expect.any(Object),
-    })
+    expect(mocks.createLead).toHaveBeenCalledWith(
+      {
+        name: 'Ayşe',
+        phone: '5551112233',
+        requestText: 'QR menü istiyor',
+        source: 'VAPI',
+        sourceMeta: expect.any(Object),
+      },
+      'tenant-1'
+    )
     expect(mocks.runQualification).toHaveBeenCalledWith('lead-1')
   })
 
@@ -113,12 +124,15 @@ describe('POST /api/webhooks/vapi', () => {
         },
       })
     )
-    expect(mocks.createLead).toHaveBeenCalledWith({
-      name: 'Belirtilmedi',
-      phone: '+905559998877',
-      requestText: 'Genel bilgi talebi',
-      source: 'VAPI',
-      sourceMeta: expect.any(Object),
-    })
+    expect(mocks.createLead).toHaveBeenCalledWith(
+      {
+        name: 'Belirtilmedi',
+        phone: '+905559998877',
+        requestText: 'Genel bilgi talebi',
+        source: 'VAPI',
+        sourceMeta: expect.any(Object),
+      },
+      'tenant-1'
+    )
   })
 })

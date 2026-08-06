@@ -20,9 +20,10 @@ export const createLeadSchema = z
 
 export type CreateLeadInput = z.infer<typeof createLeadSchema>
 
-export async function createLead(input: CreateLeadInput) {
+export async function createLead(input: CreateLeadInput, tenantId: string) {
   return prisma.lead.create({
     data: {
+      tenantId,
       name: input.name,
       phone: input.phone,
       email: input.email,

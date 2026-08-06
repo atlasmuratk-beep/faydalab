@@ -73,15 +73,19 @@ describe('createLead', () => {
 
   it('geçerli veriyle prisma.lead.create çağırır', async () => {
     mocks.create.mockResolvedValue({ id: 'lead-1' })
-    await createLead({
-      name: 'Ali',
-      phone: '5551234567',
-      requestText: 'Web sitesi istiyorum',
-      source: 'WEBSITE',
-      sourceMeta: { foo: 'bar' },
-    })
+    await createLead(
+      {
+        name: 'Ali',
+        phone: '5551234567',
+        requestText: 'Web sitesi istiyorum',
+        source: 'WEBSITE',
+        sourceMeta: { foo: 'bar' },
+      },
+      'tenant-1'
+    )
     expect(mocks.create).toHaveBeenCalledWith({
       data: {
+        tenantId: 'tenant-1',
         name: 'Ali',
         phone: '5551234567',
         email: undefined,

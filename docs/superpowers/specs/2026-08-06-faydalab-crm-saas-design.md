@@ -104,14 +104,15 @@ Bugün `CRM_INGEST_SECRET` ve `VAPI_WEBHOOK_SECRET` global ortam değişkenleri.
 - Deneme bitiminde veya kullanıcı "Plan seç" dediğinde Checkout session oluşturulur, başarılı ödemeden sonra Stripe webhook (`checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`) `Tenant.plan`/`subscriptionStatus`/`stripeSubscriptionId` alanlarını günceller.
 - Webhook doğrulaması Stripe'ın imza doğrulama mekanizmasıyla yapılır (bu projede ilk kez kullanılan bir dış webhook deseni — CRM_INGEST_SECRET/VAPI_WEBHOOK_SECRET'tan farklı, Stripe SDK'sının kendi `constructEvent` fonksiyonu kullanılır).
 
-### Geçiş (Mevcut Production CRM'i Bozmadan)
+### Geçiş (Gerçek Veri Yok — Doğrudan Final Şema)
 
-Faz 3a'da production'a hazırlanan CRM, bu değişiklikle kırılmamalı:
+Doğrulama: `apps/crm` içinde `prisma/migrations/` klasörü **yok** ve `.vercel`/`.env.local` da yok — yani bu uygulama hiç gerçek bir veritabanına bağlanmadı, "Görev Sonrası Manuel Adımlar" (Faz 3a planı) hiç çalıştırılmadı. Kod production-ready ama **canlıda hiç veri yok**.
 
-1. **Additive migration:** `Tenant` tablosu eklenir; `Lead.tenantId` ve `AdminUser.tenantId` **nullable** olarak eklenir (henüz NOT NULL değil).
-2. **Backfill script:** Tek seferlik script "FaydaLab" adlı ilk `Tenant` kaydını oluşturur (mevcut `CRM_INGEST_SECRET`/`VAPI_WEBHOOK_SECRET` değerleri bu tenant'ın `ingestSecret`'ı olur), tüm mevcut `Lead` ve `AdminUser` kayıtlarını bu tenant'a bağlar.
-3. **Enforce migration:** `tenantId` kolonları NOT NULL yapılır, `AdminUser.username` kaldırılıp `email` zorunlu hale gelir.
-4. Bu sıralama, her adımdan sonra mevcut testlerin ve production'ın çalışır durumda kalmasını sağlar — SDD görev sırası buna göre kurulacak.
+Bu, spec'in ilk taslağındaki varsayımı geçersiz kılıyor: korunması gereken gerçek production verisi olmadığı için additive-migration/backfill/enforce üç aşamalı geçiş **gereksiz karmaşıklık**. Bunun yerine:
+
+- `schema.prisma` doğrudan final çok-kiracılı haline güncellenir (`Tenant` modeli, `Lead.tenantId`/`AdminUser.tenantId` baştan **NOT NULL**, `AdminUser.username` yerine baştan **email**).
+- İlk gerçek `prisma migrate dev` çalıştırıldığında (gerçek DB bağlandığında — bu hâlâ "Görev Sonrası Manuel Adımlar"ın bir parçası), bu zaten o uygulamanın **ilk migration'ı** (`init`) olacak; üzerine yazılacak eski bir migration geçmişi yok.
+- Yerel geliştirme/test sırasında gerçek DB olmadığından, migration'ın gerçek bir Postgres'e karşı çalıştığını doğrulamak mümkün değil — Prisma şemasının geçerliliği `prisma validate`/`prisma generate` ile, uygulama mantığı ise mock'lanmış Prisma client ile yazılan Vitest testleriyle doğrulanacak (mevcut testlerdeki desen). Gerçek migration'ın gerçek bir Postgres'e karşı ilk kez uygulanması, bu SaaS kodu tamamlandıktan sonraki production-kurulum adımında olacak.
 
 ## Kapsam Dışı (Bilinçli Olarak Ertelendi)
 
@@ -125,6 +126,5 @@ Faz 3a'da production'a hazırlanan CRM, bu değişiklikle kırılmamalı:
 
 Mevcut kalıp korunur (her `route.ts` için `route.test.ts`, `secureCompare`/`session` gibi lib fonksiyonları için birim testleri). Yeni kritik test alanları:
 - **Tenant izolasyonu**: Bir tenant'ın API isteğiyle başka bir tenant'ın lead'ine erişemediğini doğrulayan testler (en kritik güvenlik testi).
-- Backfill script'inin idempotent olduğunu (iki kez çalıştırılsa da veri bozulmadığını) doğrulayan test.
 - Plan limiti mantığı (`monthlyLeadCount` artışı/sıfırlanması, BASLANGIC'ta kısıtlı AI kalifikasyonu).
 - Stripe webhook imza doğrulama ve durum güncelleme testleri (Stripe SDK mock'lanarak).

@@ -37,7 +37,7 @@ export default async function SettingsPage() {
             Deneme süresi bitiş: {tenant.trialEndsAt.toLocaleDateString('tr-TR')}
           </p>
         )}
-        {tenant.stripeSubscriptionId && tenant.subscriptionStatus === 'ACTIVE' ? (
+        {tenant.stripeCustomerId ? (
           <div className="mt-4">
             <PortalButton />
           </div>

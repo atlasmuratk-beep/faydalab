@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   }
 
   const tenant = await prisma.tenant.findUniqueOrThrow({ where: { id: session.tenantId } })
-  if (tenant.stripeSubscriptionId && tenant.subscriptionStatus === 'ACTIVE') {
+  if (tenant.stripeSubscriptionId && (tenant.subscriptionStatus === 'ACTIVE' || tenant.subscriptionStatus === 'PAST_DUE')) {
     return NextResponse.json({ error: 'already_subscribed' }, { status: 409 })
   }
   const user = await prisma.adminUser.findUniqueOrThrow({ where: { id: session.userId } })

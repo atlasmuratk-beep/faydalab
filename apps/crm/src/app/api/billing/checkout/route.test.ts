@@ -94,4 +94,17 @@ describe('POST /api/billing/checkout', () => {
     expect(response.status).toBe(409)
     expect(mocks.create).not.toHaveBeenCalled()
   })
+
+  it('PAST_DUE durumunda da 409 döner (checkout ile ikinci abonelik açılmasın)', async () => {
+    mocks.requireSession.mockResolvedValue({ userId: 'user-1', tenantId: 'tenant-1' })
+    mocks.findUniqueOrThrowTenant.mockResolvedValue({
+      id: 'tenant-1',
+      stripeCustomerId: 'cus_123',
+      stripeSubscriptionId: 'sub_123',
+      subscriptionStatus: 'PAST_DUE',
+    })
+    const response = await POST(makeRequest({ plan: 'PRO' }))
+    expect(response.status).toBe(409)
+    expect(mocks.create).not.toHaveBeenCalled()
+  })
 })

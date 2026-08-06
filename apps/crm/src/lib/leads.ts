@@ -11,7 +11,7 @@ export const createLeadSchema = z
     email: z.string().email().optional(),
     requestText: z.string().min(1).max(5000),
     source: z.enum(['WEBSITE', 'VAPI']),
-    sourceMeta: z.unknown().default({}),
+    sourceMeta: z.unknown().nullish().transform((v) => v ?? {}),
   })
   .refine((data) => Boolean(data.phone) || Boolean(data.email), {
     message: 'phone veya email alanlarından en az biri gerekli',

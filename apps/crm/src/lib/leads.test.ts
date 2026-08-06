@@ -50,6 +50,20 @@ describe('createLeadSchema', () => {
       expect(result.data.sourceMeta).toEqual({})
     }
   })
+
+  it('sourceMeta açıkça null verilirse yine boş nesneye dönüşür', () => {
+    const result = createLeadSchema.safeParse({
+      name: 'Ali',
+      phone: '5551234567',
+      requestText: 'Web sitesi istiyorum',
+      source: 'VAPI',
+      sourceMeta: null,
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.sourceMeta).toEqual({})
+    }
+  })
 })
 
 describe('createLead', () => {

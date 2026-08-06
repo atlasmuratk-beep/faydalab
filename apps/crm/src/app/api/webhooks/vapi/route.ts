@@ -1,6 +1,7 @@
 import { NextResponse, after } from 'next/server'
 import { createLeadSchema, createLead, runQualification } from '@/lib/leads'
 import { resolveTenantBySecret } from '@/lib/tenant-ingest'
+import { isRateLimited } from '@/lib/rate-limit'
 
 interface VapiEndOfCallBody {
   message?: {
@@ -14,6 +15,11 @@ interface VapiEndOfCallBody {
 }
 
 export async function POST(req: Request) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',').pop()?.trim() ?? 'unknown'
+  if (isRateLimited(`vapi:${ip}`, 20, 60_000)) {
+    return NextResponse.json({ error: 'Çok fazla istek' }, { status: 429 })
+  }
+
   const url = new URL(req.url)
   // Header tercih edilir (URL'ler sunucu erişim loglarında düz metin olarak kalabilir);
   // query param, Vapi'nin şu anki webhook yapılandırmasıyla geriye dönük uyumluluk için korunur.

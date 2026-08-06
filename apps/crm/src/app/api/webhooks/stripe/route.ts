@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { stripeClient } from '@/lib/stripe'
+import { stripeClient, planForPriceId } from '@/lib/stripe'
 import type Stripe from 'stripe'
 
 export async function POST(req: Request) {
@@ -41,10 +41,25 @@ export async function POST(req: Request) {
       const subscription = event.data.object as Stripe.Subscription
       const tenantId = subscription.metadata?.tenantId
       if (tenantId) {
-        const status =
-          subscription.status === 'active' ? 'ACTIVE' : subscription.status === 'past_due' ? 'PAST_DUE' : undefined
-        if (status) {
-          await prisma.tenant.update({ where: { id: tenantId }, data: { subscriptionStatus: status } })
+        const statusMap: Record<string, 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | undefined> = {
+          active: 'ACTIVE',
+          past_due: 'PAST_DUE',
+          canceled: 'CANCELED',
+          unpaid: 'CANCELED',
+          incomplete_expired: 'CANCELED',
+          paused: 'CANCELED',
+        }
+        const status = statusMap[subscription.status]
+        const priceId = subscription.items.data[0]?.price.id
+        const plan = priceId ? planForPriceId(priceId) : null
+        if (status || plan) {
+          await prisma.tenant.update({
+            where: { id: tenantId },
+            data: {
+              ...(status ? { subscriptionStatus: status } : {}),
+              ...(plan ? { plan } : {}),
+            },
+          })
         }
       }
       break

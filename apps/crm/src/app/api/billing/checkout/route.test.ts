@@ -51,7 +51,12 @@ describe('POST /api/billing/checkout', () => {
 
   it('mevcut stripeCustomerId varsa customer ile checkout session oluşturur', async () => {
     mocks.requireSession.mockResolvedValue({ userId: 'user-1', tenantId: 'tenant-1' })
-    mocks.findUniqueOrThrowTenant.mockResolvedValue({ id: 'tenant-1', stripeCustomerId: 'cus_123' })
+    mocks.findUniqueOrThrowTenant.mockResolvedValue({
+      id: 'tenant-1',
+      stripeCustomerId: 'cus_123',
+      stripeSubscriptionId: null,
+      subscriptionStatus: 'TRIALING',
+    })
     mocks.create.mockResolvedValue({ url: 'https://checkout.stripe.com/session-1' })
     const response = await POST(makeRequest({ plan: 'PRO' }))
     expect(response.status).toBe(200)
@@ -64,11 +69,29 @@ describe('POST /api/billing/checkout', () => {
 
   it('stripeCustomerId yoksa customer_email ile checkout session oluşturur', async () => {
     mocks.requireSession.mockResolvedValue({ userId: 'user-1', tenantId: 'tenant-1' })
-    mocks.findUniqueOrThrowTenant.mockResolvedValue({ id: 'tenant-1', stripeCustomerId: null })
+    mocks.findUniqueOrThrowTenant.mockResolvedValue({
+      id: 'tenant-1',
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      subscriptionStatus: 'TRIALING',
+    })
     mocks.findUniqueOrThrowUser.mockResolvedValue({ id: 'user-1', email: 'a@b.com' })
     mocks.create.mockResolvedValue({ url: 'https://checkout.stripe.com/session-2' })
     const response = await POST(makeRequest({ plan: 'BASLANGIC' }))
     expect(response.status).toBe(200)
     expect(mocks.create).toHaveBeenCalledWith(expect.objectContaining({ customer_email: 'a@b.com' }))
+  })
+
+  it('zaten aktif abonesi varsa 409 döner', async () => {
+    mocks.requireSession.mockResolvedValue({ userId: 'user-1', tenantId: 'tenant-1' })
+    mocks.findUniqueOrThrowTenant.mockResolvedValue({
+      id: 'tenant-1',
+      stripeCustomerId: 'cus_123',
+      stripeSubscriptionId: 'sub_123',
+      subscriptionStatus: 'ACTIVE',
+    })
+    const response = await POST(makeRequest({ plan: 'PRO' }))
+    expect(response.status).toBe(409)
+    expect(mocks.create).not.toHaveBeenCalled()
   })
 })

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { prisma } from '@/lib/db'
 import { requireSession } from '@/lib/auth'
+import { hasActiveSubscription } from '@/lib/subscription'
 import { LeadStatusForm } from '@/components/LeadStatusForm'
 
 export const dynamic = 'force-dynamic'
@@ -10,6 +11,11 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const session = await requireSession()
   if (!session) {
     redirect('/admin/login')
+  }
+
+  const tenant = await prisma.tenant.findUniqueOrThrow({ where: { id: session.tenantId } })
+  if (!hasActiveSubscription(tenant)) {
+    redirect('/admin/settings')
   }
 
   const { id } = await params

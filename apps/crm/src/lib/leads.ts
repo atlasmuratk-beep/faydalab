@@ -40,7 +40,18 @@ export async function runQualification(leadId: string): Promise<void> {
   if (!lead) return
 
   try {
-    const { plan, overLimit } = await recordLeadForTenant(lead.tenantId)
+    const { plan, overLimit, subscriptionActive } = await recordLeadForTenant(lead.tenantId)
+
+    if (!subscriptionActive) {
+      await prisma.lead.update({
+        where: { id: leadId },
+        data: { aiError: 'Abonelik süresi doldu veya iptal edildi — AI değerlendirmesi çalışmadı.' },
+      })
+      await sendAlert(
+        `Yeni lead (${lead.source}): ${lead.name}\nAbonelik aktif olmadığı için AI değerlendirmesi atlandı.`
+      )
+      return
+    }
 
     if (overLimit) {
       await prisma.lead.update({

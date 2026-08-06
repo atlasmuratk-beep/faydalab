@@ -14,7 +14,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   const { id } = await params
-  const body = await req.json()
+  let body: unknown
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
+  }
   const parsed = updateSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })
@@ -28,6 +33,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: 'Lead bulunamadı' }, { status: 404 })
   }
 
-  const lead = await prisma.lead.findUnique({ where: { id } })
+  const lead = await prisma.lead.findFirst({ where: { id, tenantId: session.tenantId } })
   return NextResponse.json(lead)
 }

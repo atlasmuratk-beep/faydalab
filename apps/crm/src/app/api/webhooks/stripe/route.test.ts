@@ -6,7 +6,14 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/lib/db', () => ({ prisma: { tenant: { update: mocks.update } } }))
-vi.mock('@/lib/stripe', () => ({ stripeClient: () => ({ webhooks: { constructEvent: mocks.constructEvent } }) }))
+vi.mock('@/lib/stripe', () => ({
+  stripeClient: () => ({ webhooks: { constructEvent: mocks.constructEvent } }),
+  planForPriceId: (priceId: string) => {
+    if (priceId === process.env.STRIPE_PRICE_BASLANGIC) return 'BASLANGIC'
+    if (priceId === process.env.STRIPE_PRICE_PRO) return 'PRO'
+    return null
+  },
+}))
 
 import { POST } from './route'
 
@@ -63,6 +70,45 @@ describe('POST /api/webhooks/stripe', () => {
     const response = await POST(makeRequest('{}'))
     expect(response.status).toBe(200)
     expect(mocks.update).toHaveBeenCalledWith({ where: { id: 'tenant-1' }, data: { subscriptionStatus: 'CANCELED' } })
+  })
+
+  it('customer.subscription.updated olayında plan price id\'den türetilip güncellenir', async () => {
+    process.env.STRIPE_PRICE_PRO = 'price_pro_123'
+    mocks.constructEvent.mockReturnValue({
+      type: 'customer.subscription.updated',
+      data: {
+        object: {
+          metadata: { tenantId: 'tenant-1' },
+          status: 'active',
+          items: { data: [{ price: { id: 'price_pro_123' } }] },
+        },
+      },
+    })
+    const response = await POST(makeRequest('{}'))
+    expect(response.status).toBe(200)
+    expect(mocks.update).toHaveBeenCalledWith({
+      where: { id: 'tenant-1' },
+      data: { subscriptionStatus: 'ACTIVE', plan: 'PRO' },
+    })
+  })
+
+  it('customer.subscription.updated olayında unpaid/incomplete_expired/paused durumları CANCELED\'a eşlenir', async () => {
+    mocks.constructEvent.mockReturnValue({
+      type: 'customer.subscription.updated',
+      data: {
+        object: {
+          metadata: { tenantId: 'tenant-1' },
+          status: 'unpaid',
+          items: { data: [] },
+        },
+      },
+    })
+    const response = await POST(makeRequest('{}'))
+    expect(response.status).toBe(200)
+    expect(mocks.update).toHaveBeenCalledWith({
+      where: { id: 'tenant-1' },
+      data: { subscriptionStatus: 'CANCELED' },
+    })
   })
 
   it('bilinmeyen olay tipinde güncelleme yapmadan 200 döner', async () => {

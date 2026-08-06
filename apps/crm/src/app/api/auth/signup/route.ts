@@ -37,9 +37,19 @@ export async function POST(req: Request) {
 
   const tenant = await createTenant(parsed.data.businessName)
   const passwordHash = await bcrypt.hash(parsed.data.password, 10)
-  const user = await prisma.adminUser.create({
-    data: { email: parsed.data.email, passwordHash, tenantId: tenant.id },
-  })
+
+  let user
+  try {
+    user = await prisma.adminUser.create({
+      data: { email: parsed.data.email, passwordHash, tenantId: tenant.id },
+    })
+  } catch (error) {
+    await prisma.tenant.delete({ where: { id: tenant.id } }).catch(() => {})
+    if ((error as { code?: string }).code === 'P2002') {
+      return NextResponse.json({ error: 'Bu e-posta ile zaten bir hesap var' }, { status: 409 })
+    }
+    throw error
+  }
 
   const res = NextResponse.json({ ok: true }, { status: 201 })
   res.cookies.set(SESSION_COOKIE, signSession(user.id, tenant.id), {

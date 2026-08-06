@@ -105,7 +105,7 @@ describe('runQualification', () => {
     mocks.update.mockReset()
     mocks.qualifyLead.mockReset()
     mocks.sendAlert.mockReset()
-    mocks.recordLeadForTenant.mockReset().mockResolvedValue({ plan: 'PRO', overLimit: false })
+    mocks.recordLeadForTenant.mockReset().mockResolvedValue({ plan: 'PRO', overLimit: false, subscriptionActive: true })
   })
 
   it('lead bulunamazsa hiçbir şey yapmaz', async () => {
@@ -136,12 +136,24 @@ describe('runQualification', () => {
 
   it('BASLANGIC planda aylık sınır aşılmışsa AI çağrılmaz, aiError set edilir', async () => {
     mocks.findUnique.mockResolvedValue({ id: 'lead-1', tenantId: 'tenant-1', name: 'Ali', source: 'WEBSITE', requestText: 'talep' })
-    mocks.recordLeadForTenant.mockResolvedValue({ plan: 'BASLANGIC', overLimit: true })
+    mocks.recordLeadForTenant.mockResolvedValue({ plan: 'BASLANGIC', overLimit: true, subscriptionActive: true })
     await runQualification('lead-1')
     expect(mocks.qualifyLead).not.toHaveBeenCalled()
     expect(mocks.update).toHaveBeenCalledWith({
       where: { id: 'lead-1' },
       data: { aiError: expect.stringContaining('Aylık lead sınırına ulaşıldı') },
+    })
+    expect(mocks.sendAlert).toHaveBeenCalledOnce()
+  })
+
+  it('abonelik aktif değilse AI çağrılmaz, aiError set edilir', async () => {
+    mocks.findUnique.mockResolvedValue({ id: 'lead-1', tenantId: 'tenant-1', name: 'Ali', source: 'WEBSITE', requestText: 'talep' })
+    mocks.recordLeadForTenant.mockResolvedValue({ plan: 'PRO', overLimit: false, subscriptionActive: false })
+    await runQualification('lead-1')
+    expect(mocks.qualifyLead).not.toHaveBeenCalled()
+    expect(mocks.update).toHaveBeenCalledWith({
+      where: { id: 'lead-1' },
+      data: { aiError: expect.stringContaining('Abonelik süresi doldu') },
     })
     expect(mocks.sendAlert).toHaveBeenCalledOnce()
   })

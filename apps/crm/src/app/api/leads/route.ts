@@ -4,15 +4,15 @@ import { isRateLimited } from '@/lib/rate-limit'
 import { resolveTenantBySecret } from '@/lib/tenant-ingest'
 
 export async function POST(req: Request) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',').pop()?.trim() ?? 'unknown'
+  if (isRateLimited(ip, 20, 60_000)) {
+    return NextResponse.json({ error: 'Çok fazla istek' }, { status: 429 })
+  }
+
   const secret = req.headers.get('x-crm-ingest-secret')
   const tenant = await resolveTenantBySecret(secret)
   if (!tenant) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
-  const ip = req.headers.get('x-forwarded-for')?.split(',').pop()?.trim() ?? 'unknown'
-  if (isRateLimited(ip, 20, 60_000)) {
-    return NextResponse.json({ error: 'Çok fazla istek' }, { status: 429 })
   }
 
   let body: unknown

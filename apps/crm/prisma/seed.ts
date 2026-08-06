@@ -11,7 +11,7 @@ async function main() {
     throw new Error('ADMIN_EMAIL ve ADMIN_PASSWORD .env dosyasında tanımlı olmalı')
   }
 
-  const ingestSecret = process.env.CRM_INGEST_SECRET ?? randomBytes(32).toString('hex')
+  const ingestSecret = randomBytes(32).toString('hex')
 
   const tenant = await prisma.tenant.upsert({
     where: { slug: 'faydalab' },

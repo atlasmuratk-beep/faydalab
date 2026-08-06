@@ -2,10 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   updateMany: vi.fn(),
-  findUnique: vi.fn(),
+  findFirst: vi.fn(),
 }))
 
-vi.mock('@/lib/db', () => ({ prisma: { lead: { updateMany: mocks.updateMany, findUnique: mocks.findUnique } } }))
+vi.mock('@/lib/db', () => ({ prisma: { lead: { updateMany: mocks.updateMany, findFirst: mocks.findFirst } } }))
 vi.mock('@/lib/auth', () => ({ requireSession: vi.fn().mockResolvedValue({ userId: 'user-1', tenantId: 'tenant-1' }) }))
 
 import { PATCH } from './route'
@@ -21,7 +21,7 @@ function makeRequest(body: unknown): Request {
 describe('PATCH /api/admin/leads/[id]', () => {
   beforeEach(() => {
     mocks.updateMany.mockReset()
-    mocks.findUnique.mockReset()
+    mocks.findFirst.mockReset()
   })
 
   it('geçersiz status için 400 döner', async () => {
@@ -32,12 +32,15 @@ describe('PATCH /api/admin/leads/[id]', () => {
 
   it('geçerli status ile günceller', async () => {
     mocks.updateMany.mockResolvedValue({ count: 1 })
-    mocks.findUnique.mockResolvedValue({ id: 'lead-1', status: 'ILETISIMDE' })
+    mocks.findFirst.mockResolvedValue({ id: 'lead-1', status: 'ILETISIMDE' })
     const response = await PATCH(makeRequest({ status: 'ILETISIMDE' }), { params: Promise.resolve({ id: 'lead-1' }) })
     expect(response.status).toBe(200)
     expect(mocks.updateMany).toHaveBeenCalledWith({
       where: { id: 'lead-1', tenantId: 'tenant-1' },
       data: { status: 'ILETISIMDE' },
+    })
+    expect(mocks.findFirst).toHaveBeenCalledWith({
+      where: { id: 'lead-1', tenantId: 'tenant-1' },
     })
   })
 
@@ -45,6 +48,6 @@ describe('PATCH /api/admin/leads/[id]', () => {
     mocks.updateMany.mockResolvedValue({ count: 0 })
     const response = await PATCH(makeRequest({ status: 'ILETISIMDE' }), { params: Promise.resolve({ id: 'lead-1' }) })
     expect(response.status).toBe(404)
-    expect(mocks.findUnique).not.toHaveBeenCalled()
+    expect(mocks.findFirst).not.toHaveBeenCalled()
   })
 })

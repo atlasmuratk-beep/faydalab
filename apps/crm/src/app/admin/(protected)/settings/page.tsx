@@ -2,6 +2,9 @@ import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/db'
 import { requireSession } from '@/lib/auth'
 import { UpgradeButton } from '@/components/UpgradeButton'
+import { PortalButton } from '@/components/PortalButton'
+
+export const dynamic = 'force-dynamic'
 
 const PLAN_LABELS: Record<string, string> = { BASLANGIC: 'Başlangıç (₺499/ay)', PRO: 'Pro (₺1.499/ay)' }
 const STATUS_LABELS: Record<string, string> = {
@@ -34,10 +37,16 @@ export default async function SettingsPage() {
             Deneme süresi bitiş: {tenant.trialEndsAt.toLocaleDateString('tr-TR')}
           </p>
         )}
-        <div className="mt-4 flex gap-3">
-          <UpgradeButton plan="BASLANGIC" label="Başlangıç'a Geç" />
-          <UpgradeButton plan="PRO" label="Pro'ya Geç" />
-        </div>
+        {tenant.stripeSubscriptionId && tenant.subscriptionStatus === 'ACTIVE' ? (
+          <div className="mt-4">
+            <PortalButton />
+          </div>
+        ) : (
+          <div className="mt-4 flex gap-3">
+            <UpgradeButton plan="BASLANGIC" label="Başlangıç'a Geç" />
+            <UpgradeButton plan="PRO" label="Pro'ya Geç" />
+          </div>
+        )}
       </div>
 
       <div className="rounded border border-brand-border p-4">

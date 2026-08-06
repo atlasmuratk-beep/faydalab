@@ -1,4 +1,5 @@
 import Stripe from 'stripe'
+import type { Plan } from '@prisma/client'
 
 let client: Stripe | null = null
 
@@ -16,4 +17,10 @@ export function priceIdForPlan(plan: 'BASLANGIC' | 'PRO'): string {
   const value = process.env[key]
   if (!value) throw new Error(`${key} tanımlı değil`)
   return value
+}
+
+export function planForPriceId(priceId: string): Plan | null {
+  if (priceId === process.env.STRIPE_PRICE_BASLANGIC) return 'BASLANGIC'
+  if (priceId === process.env.STRIPE_PRICE_PRO) return 'PRO'
+  return null
 }

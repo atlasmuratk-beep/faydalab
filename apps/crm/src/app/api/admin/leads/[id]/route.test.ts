@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
-  update: vi.fn(),
+  updateMany: vi.fn(),
+  findUnique: vi.fn(),
 }))
 
-vi.mock('@/lib/db', () => ({ prisma: { lead: { update: mocks.update } } }))
-vi.mock('@/lib/auth', () => ({ requireSession: vi.fn().mockResolvedValue('user-1') }))
+vi.mock('@/lib/db', () => ({ prisma: { lead: { updateMany: mocks.updateMany, findUnique: mocks.findUnique } } }))
+vi.mock('@/lib/auth', () => ({ requireSession: vi.fn().mockResolvedValue({ userId: 'user-1', tenantId: 'tenant-1' }) }))
 
 import { PATCH } from './route'
 
@@ -19,25 +20,31 @@ function makeRequest(body: unknown): Request {
 
 describe('PATCH /api/admin/leads/[id]', () => {
   beforeEach(() => {
-    mocks.update.mockReset()
+    mocks.updateMany.mockReset()
+    mocks.findUnique.mockReset()
   })
 
   it('geçersiz status için 400 döner', async () => {
     const response = await PATCH(makeRequest({ status: 'GECERSIZ' }), { params: Promise.resolve({ id: 'lead-1' }) })
     expect(response.status).toBe(400)
-    expect(mocks.update).not.toHaveBeenCalled()
+    expect(mocks.updateMany).not.toHaveBeenCalled()
   })
 
   it('geçerli status ile günceller', async () => {
-    mocks.update.mockResolvedValue({ id: 'lead-1', status: 'ILETISIMDE' })
+    mocks.updateMany.mockResolvedValue({ count: 1 })
+    mocks.findUnique.mockResolvedValue({ id: 'lead-1', status: 'ILETISIMDE' })
     const response = await PATCH(makeRequest({ status: 'ILETISIMDE' }), { params: Promise.resolve({ id: 'lead-1' }) })
     expect(response.status).toBe(200)
-    expect(mocks.update).toHaveBeenCalledWith({ where: { id: 'lead-1' }, data: { status: 'ILETISIMDE' } })
+    expect(mocks.updateMany).toHaveBeenCalledWith({
+      where: { id: 'lead-1', tenantId: 'tenant-1' },
+      data: { status: 'ILETISIMDE' },
+    })
   })
 
-  it('bulunamayan lead için 404 döner', async () => {
-    mocks.update.mockRejectedValue({ code: 'P2025' })
+  it('bulunamayan veya başka tenanta ait lead için 404 döner', async () => {
+    mocks.updateMany.mockResolvedValue({ count: 0 })
     const response = await PATCH(makeRequest({ status: 'ILETISIMDE' }), { params: Promise.resolve({ id: 'lead-1' }) })
     expect(response.status).toBe(404)
+    expect(mocks.findUnique).not.toHaveBeenCalled()
   })
 })

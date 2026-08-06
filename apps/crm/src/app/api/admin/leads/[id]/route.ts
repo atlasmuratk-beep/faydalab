@@ -8,8 +8,8 @@ const updateSchema = z.object({
 })
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const userId = await requireSession()
-  if (!userId) {
+  const session = await requireSession()
+  if (!session) {
     return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
   }
 
@@ -20,13 +20,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  try {
-    const lead = await prisma.lead.update({ where: { id }, data: { status: parsed.data.status } })
-    return NextResponse.json(lead)
-  } catch (error) {
-    if ((error as { code?: string }).code === 'P2025') {
-      return NextResponse.json({ error: 'Lead bulunamadı' }, { status: 404 })
-    }
-    throw error
+  const result = await prisma.lead.updateMany({
+    where: { id, tenantId: session.tenantId },
+    data: { status: parsed.data.status },
+  })
+  if (result.count === 0) {
+    return NextResponse.json({ error: 'Lead bulunamadı' }, { status: 404 })
   }
+
+  const lead = await prisma.lead.findUnique({ where: { id } })
+  return NextResponse.json(lead)
 }

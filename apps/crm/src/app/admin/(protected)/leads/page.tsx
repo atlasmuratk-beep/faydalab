@@ -25,8 +25,8 @@ export default async function LeadsPage({
 }: {
   searchParams: Promise<{ status?: string; source?: string }>
 }) {
-  const userId = await requireSession()
-  if (!userId) {
+  const session = await requireSession()
+  if (!session) {
     redirect('/admin/login')
   }
 
@@ -35,6 +35,7 @@ export default async function LeadsPage({
   const validSource = source === 'WEBSITE' || source === 'VAPI' ? (source as LeadSource) : undefined
   const leads = await prisma.lead.findMany({
     where: {
+      tenantId: session.tenantId,
       status: validStatus,
       source: validSource,
     },

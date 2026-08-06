@@ -7,13 +7,13 @@ import { LeadStatusForm } from '@/components/LeadStatusForm'
 export const dynamic = 'force-dynamic'
 
 export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const userId = await requireSession()
-  if (!userId) {
+  const session = await requireSession()
+  if (!session) {
     redirect('/admin/login')
   }
 
   const { id } = await params
-  const lead = await prisma.lead.findUnique({ where: { id } })
+  const lead = await prisma.lead.findFirst({ where: { id, tenantId: session.tenantId } })
   if (!lead) {
     notFound()
   }

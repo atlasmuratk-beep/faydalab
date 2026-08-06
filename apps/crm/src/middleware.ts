@@ -5,8 +5,8 @@ export const runtime = 'nodejs'
 
 export function middleware(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE)?.value
-  const userId = verifySession(token)
-  if (!userId) {
+  const session = verifySession(token)
+  if (!session) {
     if (req.nextUrl.pathname === '/admin/login') {
       return NextResponse.next()
     }

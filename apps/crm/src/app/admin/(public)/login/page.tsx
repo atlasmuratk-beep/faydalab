@@ -15,7 +15,7 @@ export default function AdminLoginPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        username: form.get('username'),
+        email: form.get('email'),
         password: form.get('password'),
       }),
     })
@@ -33,8 +33,9 @@ export default function AdminLoginPage() {
       <h1 className="mb-6 text-2xl font-semibold uppercase text-brand-text">FaydaLab CRM Girişi</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
-          name="username"
-          placeholder="Kullanıcı adı"
+          name="email"
+          type="email"
+          placeholder="E-posta"
           required
           className="rounded border border-brand-border bg-transparent p-3 text-brand-text"
         />

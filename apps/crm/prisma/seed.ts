@@ -1,21 +1,38 @@
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { randomBytes } from 'crypto'
 
 const prisma = new PrismaClient()
 
 async function main() {
-  const username = process.env.ADMIN_USERNAME
+  const email = process.env.ADMIN_EMAIL
   const password = process.env.ADMIN_PASSWORD
-  if (!username || !password) {
-    throw new Error('ADMIN_USERNAME ve ADMIN_PASSWORD .env dosyasında tanımlı olmalı')
+  if (!email || !password) {
+    throw new Error('ADMIN_EMAIL ve ADMIN_PASSWORD .env dosyasında tanımlı olmalı')
   }
+
+  const ingestSecret = process.env.CRM_INGEST_SECRET ?? randomBytes(32).toString('hex')
+
+  const tenant = await prisma.tenant.upsert({
+    where: { slug: 'faydalab' },
+    create: {
+      name: 'FaydaLab',
+      slug: 'faydalab',
+      plan: 'PRO',
+      subscriptionStatus: 'ACTIVE',
+      ingestSecret,
+    },
+    update: {},
+  })
+
   const passwordHash = await bcrypt.hash(password, 10)
   await prisma.adminUser.upsert({
-    where: { username },
-    create: { username, passwordHash },
+    where: { email },
+    create: { email, passwordHash, tenantId: tenant.id },
     update: { passwordHash },
   })
-  console.log('Seed tamamlandı.')
+
+  console.log(`Seed tamamlandı. Tenant ingestSecret: ${tenant.ingestSecret}`)
 }
 
 main().finally(() => prisma.$disconnect())

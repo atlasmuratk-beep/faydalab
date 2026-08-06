@@ -15,7 +15,7 @@ describe('middleware', () => {
   })
 
   it('geçerli session ile /admin isteğini geçirir', () => {
-    vi.mocked(verifySession).mockReturnValue('user-1')
+    vi.mocked(verifySession).mockReturnValue({ userId: 'user-1', tenantId: 'tenant-1' })
     const req = new NextRequest('http://localhost/admin/leads')
     const res = middleware(req)
     expect(res.status).toBe(200)

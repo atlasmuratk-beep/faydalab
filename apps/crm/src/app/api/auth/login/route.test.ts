@@ -26,27 +26,27 @@ describe('POST /api/auth/login', () => {
   })
 
   it('eksik alanlarda 400 döner', async () => {
-    const response = await POST(makeRequest({ username: 'admin' }))
+    const response = await POST(makeRequest({ email: 'admin@faydalab.app' }))
     expect(response.status).toBe(400)
   })
 
   it('kullanıcı bulunamazsa 401 döner', async () => {
     mocks.findUnique.mockResolvedValue(null)
-    const response = await POST(makeRequest({ username: 'admin', password: 'wrong' }))
+    const response = await POST(makeRequest({ email: 'admin@faydalab.app', password: 'wrong' }))
     expect(response.status).toBe(401)
   })
 
   it('şifre yanlışsa 401 döner', async () => {
-    mocks.findUnique.mockResolvedValue({ id: 'user-1', username: 'admin', passwordHash: 'hash' })
+    mocks.findUnique.mockResolvedValue({ id: 'user-1', email: 'admin@faydalab.app', tenantId: 'tenant-1', passwordHash: 'hash' })
     mocks.compare.mockResolvedValue(false)
-    const response = await POST(makeRequest({ username: 'admin', password: 'wrong' }))
+    const response = await POST(makeRequest({ email: 'admin@faydalab.app', password: 'wrong' }))
     expect(response.status).toBe(401)
   })
 
   it('geçerli girişte 200 döner ve session cookie set eder', async () => {
-    mocks.findUnique.mockResolvedValue({ id: 'user-1', username: 'admin', passwordHash: 'hash' })
+    mocks.findUnique.mockResolvedValue({ id: 'user-1', email: 'admin@faydalab.app', tenantId: 'tenant-1', passwordHash: 'hash' })
     mocks.compare.mockResolvedValue(true)
-    const response = await POST(makeRequest({ username: 'admin', password: 'correct' }))
+    const response = await POST(makeRequest({ email: 'admin@faydalab.app', password: 'correct' }))
     expect(response.status).toBe(200)
     expect(response.headers.get('set-cookie')).toContain('faydalab_crm_session=')
   })
@@ -55,20 +55,20 @@ describe('POST /api/auth/login', () => {
     mocks.findUnique.mockResolvedValue(null)
     const ip = 'login-rate-limit-ip'
     for (let i = 0; i < 10; i++) {
-      const response = await POST(makeRequest({ username: 'admin', password: 'wrong' }, ip))
+      const response = await POST(makeRequest({ email: 'admin@faydalab.app', password: 'wrong' }, ip))
       expect(response.status).toBe(401)
     }
-    const eleventh = await POST(makeRequest({ username: 'admin', password: 'wrong' }, ip))
+    const eleventh = await POST(makeRequest({ email: 'admin@faydalab.app', password: 'wrong' }, ip))
     expect(eleventh.status).toBe(429)
   })
 
   it('x-forwarded-for zincirinin ilk halkası sahte olsa da son halkaya göre rate limitlenir', async () => {
     mocks.findUnique.mockResolvedValue(null)
     for (let i = 0; i < 10; i++) {
-      const response = await POST(makeRequest({ username: 'admin', password: 'wrong' }, `${i}.${i}.${i}.${i}, spoof-resist-ip`))
+      const response = await POST(makeRequest({ email: 'admin@faydalab.app', password: 'wrong' }, `${i}.${i}.${i}.${i}, spoof-resist-ip`))
       expect(response.status).toBe(401)
     }
-    const eleventh = await POST(makeRequest({ username: 'admin', password: 'wrong' }, '99.99.99.99, spoof-resist-ip'))
+    const eleventh = await POST(makeRequest({ email: 'admin@faydalab.app', password: 'wrong' }, '99.99.99.99, spoof-resist-ip'))
     expect(eleventh.status).toBe(429)
   })
 })

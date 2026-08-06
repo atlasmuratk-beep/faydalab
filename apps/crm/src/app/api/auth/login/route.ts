@@ -13,19 +13,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Çok fazla deneme, lütfen daha sonra tekrar deneyin' }, { status: 429 })
   }
 
-  const { username, password } = await req.json()
-  if (!username || !password) {
-    return NextResponse.json({ error: 'Kullanıcı adı ve şifre gerekli' }, { status: 400 })
+  const { email, password } = await req.json()
+  if (!email || !password) {
+    return NextResponse.json({ error: 'E-posta ve şifre gerekli' }, { status: 400 })
   }
 
-  const user = await prisma.adminUser.findUnique({ where: { username } })
+  const user = await prisma.adminUser.findUnique({ where: { email } })
   const valid = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH)
   if (!user || !valid) {
-    return NextResponse.json({ error: 'Geçersiz kullanıcı adı veya şifre' }, { status: 401 })
+    return NextResponse.json({ error: 'Geçersiz e-posta veya şifre' }, { status: 401 })
   }
 
   const res = NextResponse.json({ ok: true })
-  res.cookies.set(SESSION_COOKIE, signSession(user.id), {
+  res.cookies.set(SESSION_COOKIE, signSession(user.id, user.tenantId), {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',

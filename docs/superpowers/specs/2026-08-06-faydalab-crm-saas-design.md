@@ -8,6 +8,10 @@ Roadmap (`docs/10-roadmap.md`), Faz 4'ü "Academy, EU, SaaS ürünleşme" olarak
 
 **Kapsam kararı:** İki potansiyel SaaS adayı var — `apps/content-agent` (Instagram otomasyonu) ve `apps/crm` (lead yönetimi + AI kalifikasyonu). İkisini aynı anda tam detaylı tasarlamak yerine, **önce CRM SaaS'ı tam tasarla → planla → uygula → gerçek müşteriyle doğrula**, content-agent SaaS'ı bu kanıtlanana kadar ertelendi (bkz. "Kapsam Dışı").
 
+## Ürün Adı
+
+**FaydaLab CRM** — ana marka şemsiyesi altında kalır (bkz. `00-vision.md`'deki "tek otorite markası" ilkesi), ayrı bir marka inşa edilmiyor.
+
 ## Hedef
 
 `apps/crm`'i (Faz 3a'da inşa edilen, FaydaLab'ın kendi lead yönetimi için kullandığı tek-kiracılı uygulama) **çok-kiracılı (multi-tenant), self-servis abonelik ürününe** dönüştürmek. FaydaLab'ın kendi hesabı yeni sistemde 1. kiracı (tenant) olur — dogfooding.
@@ -84,6 +88,7 @@ Bugün `CRM_INGEST_SECRET` ve `VAPI_WEBHOOK_SECRET` global ortam değişkenleri.
 
 | | Başlangıç | Pro |
 |---|---|---|
+| Fiyat | ₺499/ay | ₺1.499/ay |
 | Aylık lead sınırı | 50 | Sınırsız |
 | AI kalifikasyonu | Kategori + aciliyet | Tam (özet + kategori + aciliyet + skor) |
 | Kullanıcı | 1 | 1 |
@@ -98,7 +103,6 @@ Bugün `CRM_INGEST_SECRET` ve `VAPI_WEBHOOK_SECRET` global ortam değişkenleri.
 - **Stripe Checkout** (barındırılan ödeme sayfası) — kendi ödeme formu yazılmıyor.
 - Deneme bitiminde veya kullanıcı "Plan seç" dediğinde Checkout session oluşturulur, başarılı ödemeden sonra Stripe webhook (`checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`) `Tenant.plan`/`subscriptionStatus`/`stripeSubscriptionId` alanlarını günceller.
 - Webhook doğrulaması Stripe'ın imza doğrulama mekanizmasıyla yapılır (bu projede ilk kez kullanılan bir dış webhook deseni — CRM_INGEST_SECRET/VAPI_WEBHOOK_SECRET'tan farklı, Stripe SDK'sının kendi `constructEvent` fonksiyonu kullanılır).
-- **Fiyat rakamları (₺/ay) açık bırakıldı** — bu bir pazar/rekabet kararı, tahmin etmek yerine plan yazım aşamasında kullanıcıdan net rakam istenecek.
 
 ### Geçiş (Mevcut Production CRM'i Bozmadan)
 
@@ -116,11 +120,6 @@ Faz 3a'da production'a hazırlanan CRM, bu değişiklikle kırılmamalı:
 - **White-label / ajanslara satış**: Hedef kitle netleşmedi, bu senaryo şimdilik tasarlanmıyor.
 - **Tenant-bazlı rate limiting**: Mevcut IP-bazlı sınırlama yeterli kabul edildi, tenant-bazlı ek sınırlama sonraya bırakıldı.
 - **Self-servis plan değiştirme/iptal UI'ı**: v1'de Stripe'ın kendi müşteri portalı (Customer Portal) kullanılabilir — özel bir "plan yönetimi" ekranı yazılmayacak.
-
-## Açık Sorular (Kullanıcıdan Netlik Gerekiyor)
-
-1. **Fiyat rakamları:** Başlangıç ve Pro planlarının ₺/ay tutarları.
-2. **Slug/marka adı:** SaaS ürünü "FaydaLab CRM" olarak mı sunulacak yoksa ayrı bir ürün adı mı alacak (pazarlama sayfası/domain için)?
 
 ## Test Stratejisi
 

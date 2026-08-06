@@ -13,6 +13,8 @@ enum SectionType {
   CASE_STUDY
   TEXT_BLOCK
   CONTACT
+  PROCESS
+  FAQ
 }
 
 model Section {

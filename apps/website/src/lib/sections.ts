@@ -62,7 +62,28 @@ export const contactContentSchema = z.object({
   subtitle: z.string().min(1).max(2000),
 })
 
-export const SECTION_TYPES = ['HERO', 'SERVICES', 'CASE_STUDY', 'TEXT_BLOCK', 'CONTACT'] as const
+export const processStepSchema = z.object({
+  title: z.string().min(1).max(200),
+  description: z.string().min(1).max(2000),
+})
+
+export const processContentSchema = z.object({
+  title: z.string().min(1).max(200),
+  subtitle: z.string().min(1).max(2000),
+  steps: z.array(processStepSchema).min(1),
+})
+
+export const faqItemSchema = z.object({
+  question: z.string().min(1).max(300),
+  answer: z.string().min(1).max(2000),
+})
+
+export const faqContentSchema = z.object({
+  title: z.string().min(1).max(200),
+  items: z.array(faqItemSchema).min(1),
+})
+
+export const SECTION_TYPES = ['HERO', 'SERVICES', 'CASE_STUDY', 'TEXT_BLOCK', 'CONTACT', 'PROCESS', 'FAQ'] as const
 export type SectionType = (typeof SECTION_TYPES)[number]
 
 const contentSchemaByType = {
@@ -71,6 +92,8 @@ const contentSchemaByType = {
   CASE_STUDY: caseStudyContentSchema,
   TEXT_BLOCK: textBlockContentSchema,
   CONTACT: contactContentSchema,
+  PROCESS: processContentSchema,
+  FAQ: faqContentSchema,
 } as const
 
 export function validateSectionContent(type: SectionType, content: unknown) {
@@ -82,3 +105,5 @@ export type ServicesContent = z.infer<typeof servicesContentSchema>
 export type CaseStudyContent = z.infer<typeof caseStudyContentSchema>
 export type TextBlockContent = z.infer<typeof textBlockContentSchema>
 export type ContactContent = z.infer<typeof contactContentSchema>
+export type ProcessContent = z.infer<typeof processContentSchema>
+export type FaqContent = z.infer<typeof faqContentSchema>

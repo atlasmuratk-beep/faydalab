@@ -6,7 +6,7 @@ const prisma = new PrismaClient()
 async function main() {
   const existingCount = await prisma.section.count()
   if (existingCount === 0) {
-    const sections: { type: "HERO" | "SERVICES" | "CASE_STUDY" | "TEXT_BLOCK" | "CONTACT"; content: Record<string, unknown> }[] = [
+    const sections: { type: "HERO" | "SERVICES" | "CASE_STUDY" | "TEXT_BLOCK" | "CONTACT" | "PROCESS" | "FAQ"; content: Record<string, unknown> }[] = [
       {
         type: "HERO",
         content: {
@@ -50,6 +50,33 @@ async function main() {
         },
       },
       {
+        type: "PROCESS",
+        content: {
+          title: "Talep Anından Teslime",
+          subtitle: "Aracısız, şeffaf ve büyük ölçüde otomasyonla desteklenen bir süreç.",
+          steps: [
+            {
+              title: "Talebini İlet",
+              description: "Site üzerinden form doldur ya da doğrudan yaz — ihtiyacını birkaç cümleyle anlatman yeterli.",
+            },
+            {
+              title: "AI Anında Değerlendirir",
+              description:
+                "Talebin, yapay zeka tarafından kategori, aciliyet ve öncelik açısından saniyeler içinde değerlendirilir; hiçbir talep kaybolmaz.",
+            },
+            {
+              title: "Netleşen Kapsamla Teklif",
+              description: "Değerlendirmenin ardından kurucuyla doğrudan görüşüp kapsamı ve fiyatı netleştiriyoruz — aracı yok.",
+            },
+            {
+              title: "Panelden Yönetilebilir Teslim",
+              description:
+                "Teslim edilen her sistem, teknik bilgi gerektirmeden kendi panelinden içerik/fiyat/duyuru güncelleyebileceğin şekilde kurulur.",
+            },
+          ],
+        },
+      },
+      {
         type: "CASE_STUDY",
         content: {
           projectName: "Gazi-Usta Aile Kebap Salonu",
@@ -87,7 +114,39 @@ async function main() {
         content: {
           title: "Hakkımızda",
           bodyMarkdown:
-            "FaydaLab, teknolojiyi ve yapay zekayı anlaşılır, uygulanabilir ve güvenilir kılan bir teknoloji otorite markasıdır.\n\nKüçük işletmelerden eğitim kurumlarına kadar farklı ihtiyaçlara somut, abartısız çözümler üretiyoruz — vaat değil, sonuç.",
+            "FaydaLab, tek bir kurucu tarafından yürütülen ama bir ajans kadrosu hızında çalışan bir teknoloji stüdyosudur. Kalabalık bir ekip yerine, kendi ürettiğimiz yapay zeka araçlarını kullanıyoruz — sosyal medya içeriğimizden gelen taleplerin ilk değerlendirmesine kadar, sattığımız otomasyonun aynısını kendi operasyonumuzda çalıştırıyoruz.\n\nBu bizim için bir pazarlama cümlesi değil: bir müşteri talebi geldiğinde, önce aynı yapay zeka sistemi talebi okuyup kategorisini, aciliyetini ve özetini çıkarıyor. Karar veren ve işi teslim eden hep insan, ama tekrarlayan işi otomasyon yapıyor — bu da daha hızlı dönüş ve daha düşük maliyet demek.\n\nKüçük işletmelerden eğitim kurumlarına kadar farklı ihtiyaçlara somut, abartısız çözümler üretiyoruz — vaat değil, sonuç.",
+        },
+      },
+      {
+        type: "FAQ",
+        content: {
+          title: "Sık Sorulan Sorular",
+          items: [
+            {
+              question: "Ne kadar sürede teslim ediyorsunuz?",
+              answer:
+                "Kapsam netleştikten sonra basit bir web sitesi/QR menü sistemi genellikle birkaç gün içinde canlıya alınır; daha kapsamlı sistemler (özel panel, entegrasyon) haftalar sürebilir. Teklif aşamasında net bir tarih veriyoruz.",
+            },
+            {
+              question: "Teknik bilgim olmasa da yönetebilir miyim?",
+              answer:
+                "Evet. Teslim edilen her sistem, kod bilmeden kullanabileceğin bir admin panelle geliyor — menü, fiyat, görsel ve duyuru gibi içerikleri kendin, anında güncelleyebilirsin.",
+            },
+            {
+              question: "Fiyatlandırma nasıl işliyor?",
+              answer:
+                "Sabit bir paket fiyatı yok; her proje kapsamına göre teklif veriyoruz. Talebini ilettikten sonra kısa bir görüşmeyle kapsamı ve bütçeyi birlikte netleştiriyoruz.",
+            },
+            {
+              question: "Zaten bir web sitem/sistemim var, onun üstüne mi çalışıyorsunuz?",
+              answer:
+                "Duruma göre değişir — mevcut sistemi geliştirebilir ya da sıfırdan, panelden yönetilebilir bir yapıya taşıyabiliriz. Hangisinin daha mantıklı olduğuna kapsamı konuştuktan sonra birlikte karar veriyoruz.",
+            },
+            {
+              question: "Teslimden sonra destek alıyor muyum?",
+              answer: "Evet, teslim sonrası hata düzeltme ve küçük güncellemeler destek kapsamındadır. Kapsamı teklif aşamasında netleştiriyoruz.",
+            },
+          ],
         },
       },
       {

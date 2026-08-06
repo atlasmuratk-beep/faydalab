@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import { ImageUploadField } from './ImageUploadField'
 
-type SectionType = 'HERO' | 'SERVICES' | 'CASE_STUDY' | 'TEXT_BLOCK' | 'CONTACT'
+type SectionType = 'HERO' | 'SERVICES' | 'CASE_STUDY' | 'TEXT_BLOCK' | 'CONTACT' | 'PROCESS' | 'FAQ'
 type ServiceItem = { icon: string; name: string; description: string }
+type ProcessStep = { title: string; description: string }
+type FaqItem = { question: string; answer: string }
 
 export function SectionForm({
   type,
@@ -96,6 +98,96 @@ export function SectionForm({
     )
   }
 
+  function processStepsField() {
+    const steps = (content.steps as ProcessStep[]) ?? []
+
+    function updateStep(index: number, key: keyof ProcessStep, value: string) {
+      const next = steps.map((step, i) => (i === index ? { ...step, [key]: value } : step))
+      setField('steps', next)
+    }
+
+    function addStep() {
+      setField('steps', [...steps, { title: '', description: '' }])
+    }
+
+    function removeStep(index: number) {
+      setField('steps', steps.filter((_, i) => i !== index))
+    }
+
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-brand-muted">Adımlar</p>
+        {steps.map((step, index) => (
+          <div key={index} className="flex flex-col gap-2 rounded border border-brand-border p-3">
+            <input
+              placeholder="Başlık"
+              value={step.title}
+              onChange={(e) => updateStep(index, 'title', e.target.value)}
+              className="rounded border border-brand-border bg-transparent p-2 text-brand-text"
+            />
+            <textarea
+              placeholder="Açıklama"
+              value={step.description}
+              onChange={(e) => updateStep(index, 'description', e.target.value)}
+              className="rounded border border-brand-border bg-transparent p-2 text-brand-text"
+            />
+            <button type="button" onClick={() => removeStep(index)} className="self-start text-sm text-red-400">
+              Adımı Sil
+            </button>
+          </div>
+        ))}
+        <button type="button" onClick={addStep} className="self-start text-sm text-brand-gold">
+          + Adım Ekle
+        </button>
+      </div>
+    )
+  }
+
+  function faqItemsField() {
+    const items = (content.items as FaqItem[]) ?? []
+
+    function updateItem(index: number, key: keyof FaqItem, value: string) {
+      const next = items.map((item, i) => (i === index ? { ...item, [key]: value } : item))
+      setField('items', next)
+    }
+
+    function addItem() {
+      setField('items', [...items, { question: '', answer: '' }])
+    }
+
+    function removeItem(index: number) {
+      setField('items', items.filter((_, i) => i !== index))
+    }
+
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-brand-muted">Sorular</p>
+        {items.map((item, index) => (
+          <div key={index} className="flex flex-col gap-2 rounded border border-brand-border p-3">
+            <input
+              placeholder="Soru"
+              value={item.question}
+              onChange={(e) => updateItem(index, 'question', e.target.value)}
+              className="rounded border border-brand-border bg-transparent p-2 text-brand-text"
+            />
+            <textarea
+              placeholder="Cevap"
+              value={item.answer}
+              onChange={(e) => updateItem(index, 'answer', e.target.value)}
+              className="rounded border border-brand-border bg-transparent p-2 text-brand-text"
+            />
+            <button type="button" onClick={() => removeItem(index)} className="self-start text-sm text-red-400">
+              Soruyu Sil
+            </button>
+          </div>
+        ))}
+        <button type="button" onClick={addItem} className="self-start text-sm text-brand-gold">
+          + Soru Ekle
+        </button>
+      </div>
+    )
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
@@ -145,6 +237,19 @@ export function SectionForm({
         <>
           {textField('title', 'Başlık')}
           {textField('subtitle', 'Alt Başlık', true)}
+        </>
+      )}
+      {type === 'PROCESS' && (
+        <>
+          {textField('title', 'Bölüm Başlığı')}
+          {textField('subtitle', 'Alt Başlık', true)}
+          {processStepsField()}
+        </>
+      )}
+      {type === 'FAQ' && (
+        <>
+          {textField('title', 'Bölüm Başlığı')}
+          {faqItemsField()}
         </>
       )}
       <button

@@ -118,6 +118,33 @@ describe('validateSectionContent', () => {
     expect(result.success).toBe(true)
   })
 
+  it('geçerli PROCESS içeriğini kabul eder', () => {
+    const result = validateSectionContent('PROCESS', {
+      title: 'Süreç',
+      subtitle: 'Nasıl çalışıyoruz',
+      steps: [{ title: 'Adım 1', description: 'açıklama' }],
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('boş steps listesi olan PROCESS içeriğini reddeder', () => {
+    const result = validateSectionContent('PROCESS', { title: 'Süreç', subtitle: 'Nasıl çalışıyoruz', steps: [] })
+    expect(result.success).toBe(false)
+  })
+
+  it('geçerli FAQ içeriğini kabul eder', () => {
+    const result = validateSectionContent('FAQ', {
+      title: 'SSS',
+      items: [{ question: 'Soru?', answer: 'Cevap' }],
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('boş items listesi olan FAQ içeriğini reddeder', () => {
+    const result = validateSectionContent('FAQ', { title: 'SSS', items: [] })
+    expect(result.success).toBe(false)
+  })
+
   it('200 karakteri aşan HERO title alanını reddeder', () => {
     const result = validateSectionContent('HERO', {
       title: 'a'.repeat(201),

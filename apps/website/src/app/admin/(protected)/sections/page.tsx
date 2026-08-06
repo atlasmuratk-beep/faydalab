@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { SectionForm } from '@/components/admin/SectionForm'
 
-type SectionType = 'HERO' | 'SERVICES' | 'CASE_STUDY' | 'TEXT_BLOCK' | 'CONTACT'
+type SectionType = 'HERO' | 'SERVICES' | 'CASE_STUDY' | 'TEXT_BLOCK' | 'CONTACT' | 'PROCESS' | 'FAQ'
 
 type SectionRecord = {
   id: string
@@ -19,6 +19,8 @@ const TYPE_LABELS: Record<SectionType, string> = {
   CASE_STUDY: 'Vaka Çalışması',
   TEXT_BLOCK: 'Metin Bloğu',
   CONTACT: 'İletişim',
+  PROCESS: 'Süreç',
+  FAQ: 'SSS',
 }
 
 const DEFAULT_CONTENT: Record<SectionType, Record<string, unknown>> = {
@@ -27,6 +29,8 @@ const DEFAULT_CONTENT: Record<SectionType, Record<string, unknown>> = {
   CASE_STUDY: { projectName: '', needText: '', solutionText: '', resultText: '', imageUrl: '', liveUrl: '' },
   TEXT_BLOCK: { title: '', bodyMarkdown: '' },
   CONTACT: { title: '', subtitle: '' },
+  PROCESS: { title: '', subtitle: '', steps: [] },
+  FAQ: { title: '', items: [] },
 }
 
 function buildErrorMessage(body: { error?: string; details?: { fieldErrors?: Record<string, string[]> } }): string {

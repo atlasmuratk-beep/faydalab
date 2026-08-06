@@ -31,8 +31,14 @@ export function Header() {
           <a href="#hizmetler" className="transition hover:text-brand-text">
             Hizmetler
           </a>
+          <a href="#surec" className="hidden transition hover:text-brand-text sm:inline">
+            Süreç
+          </a>
           <a href="#hakkimizda" className="hidden transition hover:text-brand-text sm:inline">
             Hakkımızda
+          </a>
+          <a href="#sss" className="hidden transition hover:text-brand-text md:inline">
+            SSS
           </a>
           <a
             href="#iletisim"

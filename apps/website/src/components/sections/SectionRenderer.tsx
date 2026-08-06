@@ -4,12 +4,16 @@ import { ServicesSection } from './ServicesSection'
 import { CaseStudySection } from './CaseStudySection'
 import { TextBlockSection } from './TextBlockSection'
 import { ContactSection } from './ContactSection'
+import { ProcessSection } from './ProcessSection'
+import { FaqSection } from './FaqSection'
 import type {
   HeroContent,
   ServicesContent,
   CaseStudyContent,
   TextBlockContent,
   ContactContent,
+  ProcessContent,
+  FaqContent,
 } from '@/lib/sections'
 
 export function SectionRenderer({
@@ -30,6 +34,10 @@ export function SectionRenderer({
       return <TextBlockSection content={section.content as unknown as TextBlockContent} />
     case 'CONTACT':
       return <ContactSection content={section.content as unknown as ContactContent} />
+    case 'PROCESS':
+      return <ProcessSection content={section.content as unknown as ProcessContent} />
+    case 'FAQ':
+      return <FaqSection content={section.content as unknown as FaqContent} />
     default:
       return null
   }

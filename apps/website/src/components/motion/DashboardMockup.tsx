@@ -4,7 +4,12 @@ import { useRef } from 'react'
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { BrowserFrame } from './BrowserFrame'
 
-const bars = [38, 62, 45, 80, 55, 70, 90]
+const incomingLead = { name: 'Yeni Talep', message: '"QR menü ve online sipariş sistemi istiyoruz, ne kadar sürede kurulur?"' }
+const aiTags = [
+  { label: 'Kategori', value: 'Web / QR Sistem' },
+  { label: 'Aciliyet', value: 'Yüksek' },
+  { label: 'Skor', value: '5/5' },
+]
 
 export function DashboardMockup({ stats }: { stats: { caseStudyCount: number; serviceCount: number } }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -52,24 +57,28 @@ export function DashboardMockup({ stats }: { stats: { caseStudyCount: number; se
               <p className="mt-1 text-[11px] uppercase tracking-wide text-brand-muted">Panelden Kontrol</p>
             </div>
           </div>
-          <div className="flex h-24 items-end gap-2 rounded-lg border border-brand-border bg-brand-bg p-4">
-            {bars.map((h, i) => (
-              <motion.div
-                key={i}
-                initial={{ height: 0 }}
-                animate={{ height: `${h}%` }}
-                transition={{ duration: 0.8, delay: 0.6 + i * 0.07, ease: 'easeOut' }}
-                className="flex-1 rounded-t bg-gradient-to-t from-brand-gold/30 to-brand-gold"
-              />
-            ))}
-          </div>
-          <div className="space-y-2.5 rounded-lg border border-brand-border bg-brand-bg p-4">
-            {[100, 80, 60].map((w, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <span className="h-6 w-6 shrink-0 rounded-full bg-brand-gold/15" />
-                <span className="h-2 flex-1 rounded-full bg-brand-border" style={{ maxWidth: `${w}%` }} />
-              </div>
-            ))}
+          <div className="rounded-lg border border-brand-border bg-brand-bg p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-[11px] uppercase tracking-wide text-brand-muted">{incomingLead.name}</p>
+              <span className="flex items-center gap-1.5 text-[11px] text-brand-gold">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-gold" />
+                AI kalifikasyonu
+              </span>
+            </div>
+            <p className="mb-4 text-sm leading-relaxed text-brand-text/80">{incomingLead.message}</p>
+            <div className="flex flex-wrap gap-2">
+              {aiTags.map((tag, i) => (
+                <motion.span
+                  key={tag.label}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.7 + i * 0.12 }}
+                  className="rounded-full border border-brand-gold/30 bg-brand-gold/10 px-3 py-1 text-[11px] text-brand-gold"
+                >
+                  {tag.label}: {tag.value}
+                </motion.span>
+              ))}
+            </div>
           </div>
         </div>
       </BrowserFrame>

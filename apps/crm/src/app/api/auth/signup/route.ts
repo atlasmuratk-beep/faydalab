@@ -14,7 +14,7 @@ const signupSchema = z.object({
 
 export async function POST(req: Request) {
   const ip = req.headers.get('x-forwarded-for')?.split(',').pop()?.trim() ?? 'unknown'
-  if (isRateLimited(ip, 5, 60_000)) {
+  if (isRateLimited(`signup:${ip}`, 5, 60_000)) {
     return NextResponse.json({ error: 'Çok fazla deneme, lütfen daha sonra tekrar deneyin' }, { status: 429 })
   }
 

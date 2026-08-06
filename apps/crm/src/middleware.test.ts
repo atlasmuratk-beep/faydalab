@@ -49,4 +49,12 @@ describe('middleware', () => {
     const res = middleware(req)
     expect(res.status).toBe(200)
   })
+
+  it('/admin/signup-report gibi sadece prefix eşleşen bir route\'u korumaya devam eder (regex path-segment bazlı olmalı)', () => {
+    vi.mocked(verifySession).mockReturnValue(null)
+    const req = new NextRequest('http://localhost/admin/signup-report')
+    const res = middleware(req)
+    expect(res.status).toBe(307)
+    expect(res.headers.get('location')).toContain('/admin/login')
+  })
 })

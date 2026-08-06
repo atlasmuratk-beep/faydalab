@@ -1867,13 +1867,15 @@ export async function qualifyLead(requestText: string, plan: Plan): Promise<Qual
 
   const parsed = JSON.parse(textBlock.text) as Record<string, unknown>
   return qualificationSchema.parse({
-    summary: parsed.summary ?? null,
+    summary: plan === 'PRO' ? (parsed.summary ?? null) : null,
     category: parsed.category,
     urgency: parsed.urgency,
-    score: parsed.score ?? null,
+    score: plan === 'PRO' ? (parsed.score ?? null) : null,
   })
 }
 ```
+
+(Not: `plan === 'PRO'` kontrolü deterministik bir kapı — model BASIC_INSTRUCTIONS'a rağmen summary/score döndürse bile BASLANGIC planında bunlar her zaman `null`'a zorlanır, sadece prompt'un itaatine güvenilmez.)
 
 - [ ] **Step 2: `qualify.test.ts`'i güncelle**
 
@@ -1951,14 +1953,12 @@ export async function recordLeadForTenant(tenantId: string): Promise<{ plan: Pla
   const tenant = await prisma.tenant.findUniqueOrThrow({ where: { id: tenantId } })
 
   const shouldReset = Date.now() - tenant.monthlyLeadCountResetAt.getTime() > RESET_INTERVAL_MS
-  const nextCount = shouldReset ? 1 : tenant.monthlyLeadCount + 1
 
   const updated = await prisma.tenant.update({
     where: { id: tenantId },
-    data: {
-      monthlyLeadCount: nextCount,
-      ...(shouldReset ? { monthlyLeadCountResetAt: new Date() } : {}),
-    },
+    data: shouldReset
+      ? { monthlyLeadCount: 1, monthlyLeadCountResetAt: new Date() }
+      : { monthlyLeadCount: { increment: 1 } },
   })
 
   return {
@@ -2055,22 +2055,22 @@ export async function runQualification(leadId: string): Promise<void> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId } })
   if (!lead) return
 
-  const { plan, overLimit } = await recordLeadForTenant(lead.tenantId)
-
-  if (overLimit) {
-    await prisma.lead.update({
-      where: { id: leadId },
-      data: {
-        aiError: 'Aylık lead sınırına ulaşıldı — Pro plana geçerek AI kalifikasyonunu sınırsız kullanabilirsiniz.',
-      },
-    })
-    await sendAlert(
-      `Yeni lead (${lead.source}): ${lead.name}\nAylık lead sınırına ulaşıldığı için AI değerlendirmesi atlandı.`
-    )
-    return
-  }
-
   try {
+    const { plan, overLimit } = await recordLeadForTenant(lead.tenantId)
+
+    if (overLimit) {
+      await prisma.lead.update({
+        where: { id: leadId },
+        data: {
+          aiError: 'Aylık lead sınırına ulaşıldı — Pro plana geçerek AI kalifikasyonunu sınırsız kullanabilirsiniz.',
+        },
+      })
+      await sendAlert(
+        `Yeni lead (${lead.source}): ${lead.name}\nAylık lead sınırına ulaşıldığı için AI değerlendirmesi atlandı.`
+      )
+      return
+    }
+
     const result = await qualifyLead(lead.requestText, plan)
     await prisma.lead.update({
       where: { id: leadId },
@@ -2098,6 +2098,8 @@ export async function runQualification(leadId: string): Promise<void> {
   }
 }
 ```
+
+(Not: `recordLeadForTenant` çağrısı da try bloğunun içinde — tenant bulunamazsa/silinmişse fırlatacak hata da aynı catch tarafından yakalanıp `aiError` olarak işlenir, sessizce yakalanmamış bir promise reddi olmaz.)
 
 - [ ] **Step 8: `leads.test.ts`'teki `runQualification` bloğunu güncelle**
 

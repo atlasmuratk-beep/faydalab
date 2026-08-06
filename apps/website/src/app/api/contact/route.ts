@@ -10,6 +10,29 @@ const contactSchema = z.object({
   message: z.string().min(1).max(5000),
 })
 
+// CRM'e lead iletimi best-effort'tur: CRM_API_URL tanımlı değilse veya istek
+// başarısız olursa website'in kendi contact akışı ASLA bundan etkilenmemeli.
+async function forwardToCrm(data: { name: string; email: string; message: string }): Promise<void> {
+  const crmUrl = process.env.CRM_API_URL
+  if (!crmUrl) return
+
+  try {
+    await fetch(`${crmUrl}/api/leads`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: data.name,
+        email: data.email,
+        requestText: data.message,
+        source: 'WEBSITE',
+        sourceMeta: { email: data.email },
+      }),
+    })
+  } catch (error) {
+    console.error('CRM lead iletimi başarısız:', error)
+  }
+}
+
 export async function POST(req: Request) {
   const ip = req.headers.get('x-forwarded-for') ?? 'unknown'
   if (isRateLimited(ip, 5, 60_000)) {
@@ -24,6 +47,7 @@ export async function POST(req: Request) {
 
   const saved = await prisma.contactMessage.create({ data: parsed.data })
   await sendAlert(`Yeni iletişim mesajı:\n${parsed.data.name} (${parsed.data.email})\n${parsed.data.message}`)
+  await forwardToCrm(parsed.data)
 
   return NextResponse.json({ id: saved.id }, { status: 201 })
 }

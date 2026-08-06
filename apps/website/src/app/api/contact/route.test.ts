@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
@@ -73,5 +73,38 @@ describe('POST /api/contact', () => {
     }
     const sixth = await POST(makeRequest({ name: 'Ali', email: 'ali@example.com', message: 'Merhaba' }, ip))
     expect(sixth.status).toBe(429)
+  })
+})
+
+describe('forwardToCrm entegrasyonu', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }))
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    delete process.env.CRM_API_URL
+  })
+
+  it('CRM_API_URL tanımlıysa CRM /api/leads endpoint\'ine POST atar', async () => {
+    process.env.CRM_API_URL = 'https://crm.example.com'
+    await POST(makeRequest({ name: 'Ali', email: 'ali@example.com', message: 'Merhaba' }, 'crm-ip-1'))
+    expect(fetch).toHaveBeenCalledWith(
+      'https://crm.example.com/api/leads',
+      expect.objectContaining({ method: 'POST' })
+    )
+  })
+
+  it('CRM_API_URL tanımlı değilse fetch çağırmaz', async () => {
+    delete process.env.CRM_API_URL
+    await POST(makeRequest({ name: 'Ali', email: 'ali@example.com', message: 'Merhaba' }, 'crm-ip-2'))
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('CRM isteği başarısız olsa da contact akışı 201 döner', async () => {
+    process.env.CRM_API_URL = 'https://crm.example.com'
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ağ hatası')))
+    const response = await POST(makeRequest({ name: 'Ali', email: 'ali@example.com', message: 'Merhaba' }, 'crm-ip-3'))
+    expect(response.status).toBe(201)
   })
 })

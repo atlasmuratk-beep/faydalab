@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   update: vi.fn(),
   qualifyLead: vi.fn(),
   sendAlert: vi.fn(),
+  recordLeadForTenant: vi.fn(),
 }))
 
 vi.mock('@/lib/db', () => ({
@@ -13,6 +14,7 @@ vi.mock('@/lib/db', () => ({
 }))
 vi.mock('@/lib/qualify', () => ({ qualifyLead: mocks.qualifyLead }))
 vi.mock('@/lib/telegram', () => ({ sendAlert: mocks.sendAlert }))
+vi.mock('@/lib/tenant-usage', () => ({ recordLeadForTenant: mocks.recordLeadForTenant }))
 
 import { createLead, runQualification, createLeadSchema } from './leads'
 
@@ -103,6 +105,7 @@ describe('runQualification', () => {
     mocks.update.mockReset()
     mocks.qualifyLead.mockReset()
     mocks.sendAlert.mockReset()
+    mocks.recordLeadForTenant.mockReset().mockResolvedValue({ plan: 'PRO', overLimit: false })
   })
 
   it('lead bulunamazsa hiçbir şey yapmaz', async () => {
@@ -112,9 +115,10 @@ describe('runQualification', () => {
   })
 
   it('başarılı kalifikasyonda Lead güncellenir ve bildirim gönderilir', async () => {
-    mocks.findUnique.mockResolvedValue({ id: 'lead-1', name: 'Ali', source: 'WEBSITE', requestText: 'talep' })
+    mocks.findUnique.mockResolvedValue({ id: 'lead-1', tenantId: 'tenant-1', name: 'Ali', source: 'WEBSITE', requestText: 'talep' })
     mocks.qualifyLead.mockResolvedValue({ summary: 'özet', category: 'Web Sitesi', urgency: 'YUKSEK', score: 5 })
     await runQualification('lead-1')
+    expect(mocks.qualifyLead).toHaveBeenCalledWith('talep', 'PRO')
     expect(mocks.update).toHaveBeenCalledWith({
       where: { id: 'lead-1' },
       data: { aiSummary: 'özet', aiCategory: 'Web Sitesi', aiUrgency: 'YUKSEK', aiScore: 5 },
@@ -123,10 +127,22 @@ describe('runQualification', () => {
   })
 
   it('kalifikasyon başarısız olursa Lead aiError ile güncellenir ve yine de bildirim gönderilir', async () => {
-    mocks.findUnique.mockResolvedValue({ id: 'lead-1', name: 'Ali', source: 'WEBSITE', requestText: 'talep' })
+    mocks.findUnique.mockResolvedValue({ id: 'lead-1', tenantId: 'tenant-1', name: 'Ali', source: 'WEBSITE', requestText: 'talep' })
     mocks.qualifyLead.mockRejectedValue(new Error('API hatası'))
     await runQualification('lead-1')
     expect(mocks.update).toHaveBeenCalledWith({ where: { id: 'lead-1' }, data: { aiError: 'API hatası' } })
     expect(mocks.sendAlert).toHaveBeenCalledWith(expect.stringContaining('AI değerlendirmesi başarısız'))
+  })
+
+  it('BASLANGIC planda aylık sınır aşılmışsa AI çağrılmaz, aiError set edilir', async () => {
+    mocks.findUnique.mockResolvedValue({ id: 'lead-1', tenantId: 'tenant-1', name: 'Ali', source: 'WEBSITE', requestText: 'talep' })
+    mocks.recordLeadForTenant.mockResolvedValue({ plan: 'BASLANGIC', overLimit: true })
+    await runQualification('lead-1')
+    expect(mocks.qualifyLead).not.toHaveBeenCalled()
+    expect(mocks.update).toHaveBeenCalledWith({
+      where: { id: 'lead-1' },
+      data: { aiError: expect.stringContaining('Aylık lead sınırına ulaşıldı') },
+    })
+    expect(mocks.sendAlert).toHaveBeenCalledOnce()
   })
 })

@@ -55,9 +55,9 @@ export async function qualifyLead(requestText: string, plan: Plan): Promise<Qual
 
   const parsed = JSON.parse(textBlock.text) as Record<string, unknown>
   return qualificationSchema.parse({
-    summary: parsed.summary ?? null,
+    summary: plan === 'PRO' ? (parsed.summary ?? null) : null,
     category: parsed.category,
     urgency: parsed.urgency,
-    score: parsed.score ?? null,
+    score: plan === 'PRO' ? (parsed.score ?? null) : null,
   })
 }

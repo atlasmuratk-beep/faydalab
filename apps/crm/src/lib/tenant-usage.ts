@@ -8,14 +8,12 @@ export async function recordLeadForTenant(tenantId: string): Promise<{ plan: Pla
   const tenant = await prisma.tenant.findUniqueOrThrow({ where: { id: tenantId } })
 
   const shouldReset = Date.now() - tenant.monthlyLeadCountResetAt.getTime() > RESET_INTERVAL_MS
-  const nextCount = shouldReset ? 1 : tenant.monthlyLeadCount + 1
 
   const updated = await prisma.tenant.update({
     where: { id: tenantId },
-    data: {
-      monthlyLeadCount: nextCount,
-      ...(shouldReset ? { monthlyLeadCountResetAt: new Date() } : {}),
-    },
+    data: shouldReset
+      ? { monthlyLeadCount: 1, monthlyLeadCountResetAt: new Date() }
+      : { monthlyLeadCount: { increment: 1 } },
   })
 
   return {

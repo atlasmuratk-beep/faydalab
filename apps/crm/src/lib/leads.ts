@@ -39,22 +39,22 @@ export async function runQualification(leadId: string): Promise<void> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId } })
   if (!lead) return
 
-  const { plan, overLimit } = await recordLeadForTenant(lead.tenantId)
-
-  if (overLimit) {
-    await prisma.lead.update({
-      where: { id: leadId },
-      data: {
-        aiError: 'Aylık lead sınırına ulaşıldı — Pro plana geçerek AI kalifikasyonunu sınırsız kullanabilirsiniz.',
-      },
-    })
-    await sendAlert(
-      `Yeni lead (${lead.source}): ${lead.name}\nAylık lead sınırına ulaşıldığı için AI değerlendirmesi atlandı.`
-    )
-    return
-  }
-
   try {
+    const { plan, overLimit } = await recordLeadForTenant(lead.tenantId)
+
+    if (overLimit) {
+      await prisma.lead.update({
+        where: { id: leadId },
+        data: {
+          aiError: 'Aylık lead sınırına ulaşıldı — Pro plana geçerek AI kalifikasyonunu sınırsız kullanabilirsiniz.',
+        },
+      })
+      await sendAlert(
+        `Yeni lead (${lead.source}): ${lead.name}\nAylık lead sınırına ulaşıldığı için AI değerlendirmesi atlandı.`
+      )
+      return
+    }
+
     const result = await qualifyLead(lead.requestText, plan)
     await prisma.lead.update({
       where: { id: leadId },

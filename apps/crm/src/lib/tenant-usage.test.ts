@@ -36,6 +36,10 @@ describe('recordLeadForTenant', () => {
     mocks.update.mockResolvedValue({ plan: 'BASLANGIC', monthlyLeadCount: 11 })
     const result = await recordLeadForTenant('t1')
     expect(result).toEqual({ plan: 'BASLANGIC', overLimit: false })
+    expect(mocks.update).toHaveBeenCalledWith({
+      where: { id: 't1' },
+      data: { monthlyLeadCount: { increment: 1 } },
+    })
   })
 
   it('BASLANGIC planda 50 lead üzerine çıkınca sınır aşılır', async () => {

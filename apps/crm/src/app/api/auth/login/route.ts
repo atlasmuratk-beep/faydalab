@@ -8,7 +8,7 @@ import { isRateLimited } from '@/lib/rate-limit'
 const DUMMY_HASH = '$2b$10$RhHop1MRdgOrzn.wsoB68OdJb0cQIupfd4j1r8VVYtPHH1EPA1Mm.'
 
 export async function POST(req: Request) {
-  const ip = req.headers.get('x-forwarded-for') ?? 'unknown'
+  const ip = req.headers.get('x-forwarded-for')?.split(',').pop()?.trim() ?? 'unknown'
   if (isRateLimited(ip, 10, 60_000)) {
     return NextResponse.json({ error: 'Çok fazla deneme, lütfen daha sonra tekrar deneyin' }, { status: 429 })
   }

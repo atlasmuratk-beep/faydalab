@@ -1,5 +1,6 @@
 import { NextResponse, after } from 'next/server'
 import { createLeadSchema, createLead, runQualification } from '@/lib/leads'
+import { secureCompare } from '@/lib/secure-compare'
 
 interface VapiEndOfCallBody {
   message?: {
@@ -14,8 +15,11 @@ interface VapiEndOfCallBody {
 
 export async function POST(req: Request) {
   const url = new URL(req.url)
-  const token = url.searchParams.get('token')
-  if (!process.env.VAPI_WEBHOOK_SECRET || token !== process.env.VAPI_WEBHOOK_SECRET) {
+  // Header tercih edilir (URL'ler sunucu erişim loglarında düz metin olarak kalabilir);
+  // query param, Vapi'nin şu anki webhook yapılandırmasıyla geriye dönük uyumluluk için korunur.
+  const token = req.headers.get('x-vapi-webhook-secret') ?? url.searchParams.get('token')
+  const expected = process.env.VAPI_WEBHOOK_SECRET
+  if (!expected || !token || !secureCompare(token, expected)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

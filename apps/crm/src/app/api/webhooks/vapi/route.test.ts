@@ -37,6 +37,29 @@ describe('POST /api/webhooks/vapi', () => {
     expect(mocks.createLead).not.toHaveBeenCalled()
   })
 
+  it('x-vapi-webhook-secret header ile doğru secret gönderilirse kabul eder', async () => {
+    mocks.createLead.mockResolvedValue({ id: 'lead-1' })
+    const response = await POST(
+      new Request('http://localhost/api/webhooks/vapi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-vapi-webhook-secret': 'correct-secret' },
+        body: JSON.stringify({ message: { type: 'status-update' } }),
+      })
+    )
+    expect(response.status).toBe(200)
+  })
+
+  it('header yanlışsa query param doğru olsa bile 403 döner (header önceliklidir)', async () => {
+    const response = await POST(
+      new Request('http://localhost/api/webhooks/vapi?token=correct-secret', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-vapi-webhook-secret': 'wrong-secret' },
+        body: JSON.stringify({ message: { type: 'status-update' } }),
+      })
+    )
+    expect(response.status).toBe(403)
+  })
+
   it('bozuk JSON gövdesi için 400 döner', async () => {
     const response = await POST(
       new Request('http://localhost/api/webhooks/vapi?token=correct-secret', {

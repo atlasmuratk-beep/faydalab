@@ -61,4 +61,14 @@ describe('POST /api/auth/login', () => {
     const eleventh = await POST(makeRequest({ username: 'admin', password: 'wrong' }, ip))
     expect(eleventh.status).toBe(429)
   })
+
+  it('x-forwarded-for zincirinin ilk halkası sahte olsa da son halkaya göre rate limitlenir', async () => {
+    mocks.findUnique.mockResolvedValue(null)
+    for (let i = 0; i < 10; i++) {
+      const response = await POST(makeRequest({ username: 'admin', password: 'wrong' }, `${i}.${i}.${i}.${i}, spoof-resist-ip`))
+      expect(response.status).toBe(401)
+    }
+    const eleventh = await POST(makeRequest({ username: 'admin', password: 'wrong' }, '99.99.99.99, spoof-resist-ip'))
+    expect(eleventh.status).toBe(429)
+  })
 })

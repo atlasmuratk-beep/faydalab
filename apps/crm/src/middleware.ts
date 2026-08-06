@@ -3,11 +3,13 @@ import { verifySession, SESSION_COOKIE } from '@/lib/session'
 
 export const runtime = 'nodejs'
 
+const PUBLIC_ADMIN_PATHS = new Set(['/admin/login', '/admin/signup'])
+
 export function middleware(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE)?.value
   const session = verifySession(token)
   if (!session) {
-    if (req.nextUrl.pathname === '/admin/login') {
+    if (PUBLIC_ADMIN_PATHS.has(req.nextUrl.pathname)) {
       return NextResponse.next()
     }
     if (req.nextUrl.pathname.startsWith('/api/')) {
@@ -19,5 +21,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin', '/admin/((?!login).*)', '/api/admin/:path*'],
+  matcher: ['/admin', '/admin/((?!login|signup).*)', '/api/admin/:path*'],
 }

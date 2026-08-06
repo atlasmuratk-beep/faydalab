@@ -42,4 +42,11 @@ describe('middleware', () => {
     const res = middleware(req)
     expect(res.status).toBe(200)
   })
+
+  it('/admin/signup isteğini middleware\'den geçirir (session olmasa bile)', () => {
+    vi.mocked(verifySession).mockReturnValue(null)
+    const req = new NextRequest('http://localhost/admin/signup')
+    const res = middleware(req)
+    expect(res.status).toBe(200)
+  })
 })
